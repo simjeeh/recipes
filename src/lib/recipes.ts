@@ -22,9 +22,11 @@ export type ProcessStep = {
   detail?: string;
   parents: string[];
   branch_label?: string;
+  /** Name of the parallel lane this step heads, e.g. "Pot 1". */
+  lane_label?: string;
   /**
    * Alternative steps sit side by side as mutually exclusive options ("or").
-   * Steps sharing a level without this flag are done at the same time.
+   * Steps sharing a level without this flag run simultaneously.
    */
   alternative?: boolean;
   /** Secret steps are stripped from public reads and only shown to admins. */
@@ -139,12 +141,14 @@ export function stepEdges(steps: ProcessStep[]): { from: string; to: string; lab
 }
 
 /**
- * A row in the process flow. `steps` holds one step (plain) or several done at
- * the same time; `options` holds mutually exclusive branches. Each branch is a
- * list of rows, so options can nest inside options.
+ * A row in the process flow. `steps` holds one step (plain) or several single
+ * steps that run simultaneously; `parallel` holds simultaneous lanes that are
+ * each a chain of rows; `options` holds mutually exclusive branches. Branches
+ * and lanes are lists of rows, so everything can nest.
  */
 export type ProcessRow =
   | { kind: "steps"; steps: ProcessStep[] }
+  | { kind: "parallel"; lanes: ProcessBranch[] }
   | { kind: "options"; branches: ProcessBranch[] };
 
 export type ProcessBranch = { label: string; rows: ProcessRow[] };
@@ -179,30 +183,79 @@ export function toProcessRows(steps: ProcessStep[]): ProcessRow[] {
   const consumed = new Set<string>();
   const rows: ProcessRow[] = [];
 
+  const chainFor = (headId: string, otherRoots: string[]) =>
+    exclusiveChain(steps, headId, otherRoots)
+      .filter((step) => !consumed.has(step.id))
+      .sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+
   levels.forEach((level, levelIndex) => {
     const remaining = level.filter((step) => !consumed.has(step.id));
     if (!remaining.length) return;
 
     if (remaining.length > 1 && remaining.every((step) => step.alternative)) {
       const roots = remaining.map((step) => step.id);
-      const branches = remaining.map((head) => {
-        const rest = exclusiveChain(
-          steps,
-          head.id,
-          roots.filter((id) => id !== head.id),
-        )
-          .filter((step) => !consumed.has(step.id))
-          .sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+      // Heads sharing a branch label belong to the same option (they then run
+      // as parallel lanes inside that option).
+      const groups: ProcessStep[][] = [];
+      const byLabel = new Map<string, ProcessStep[]>();
+      for (const step of remaining) {
+        const label = (step.branch_label ?? "").trim();
+        const existing = label ? byLabel.get(label) : undefined;
+        if (existing) {
+          existing.push(step);
+          continue;
+        }
+        const group = [step];
+        if (label) byLabel.set(label, group);
+        groups.push(group);
+      }
+
+      const branches = groups.map((heads) => {
+        const headIds = new Set(heads.map((step) => step.id));
+        const others = roots.filter((id) => !headIds.has(id));
+        const rest: ProcessStep[] = [];
+        for (const head of heads) {
+          for (const step of chainFor(head.id, others)) {
+            if (rest.some((item) => item.id === step.id)) continue;
+            rest.push(step);
+          }
+        }
         rest.forEach((step) => consumed.add(step.id));
         return {
-          label: head.branch_label ?? "",
-          // Recurse so nested alternatives inside a branch become their own rows.
-          rows: toProcessRows([head, ...rest]),
+          label: heads[0].branch_label ?? "",
+          // Recurse so nested rows inside a branch resolve on their own.
+          rows: toProcessRows([
+            ...heads.map((head) => ({ ...head, alternative: false, branch_label: undefined })),
+            ...rest,
+          ]),
         };
       });
       remaining.forEach((step) => consumed.add(step.id));
       rows.push({ kind: "options", branches });
       return;
+    }
+
+    // Simultaneous steps that each own a chain become parallel lanes.
+    if (remaining.length > 1) {
+      const roots = remaining.map((step) => step.id);
+      const chains = remaining.map((head) =>
+        chainFor(
+          head.id,
+          roots.filter((id) => id !== head.id),
+        ),
+      );
+      if (chains.some((chain) => chain.length)) {
+        remaining.forEach((step) => consumed.add(step.id));
+        const lanes = remaining.map((head, index) => {
+          chains[index].forEach((step) => consumed.add(step.id));
+          return {
+            label: head.lane_label ?? "",
+            rows: toProcessRows([{ ...head, lane_label: undefined }, ...chains[index]]),
+          };
+        });
+        rows.push({ kind: "parallel", lanes });
+        return;
+      }
     }
 
     remaining.forEach((step) => consumed.add(step.id));
@@ -242,10 +295,33 @@ function emitRows(
           parents: current,
           alternative: false,
           branch_label: undefined,
+          lane_label: undefined,
         });
       }
       if (heads === null) heads = steps.map((step) => step.id);
       current = steps.map((step) => step.id);
+      continue;
+    }
+
+    if (row.kind === "parallel") {
+      const laneHeads: string[] = [];
+      const laneTails: string[] = [];
+
+      for (const lane of row.lanes) {
+        const emitted = emitRows(lane.rows, current, out);
+        if (!emitted.heads.length) continue;
+        const label = lane.label?.trim();
+        for (const id of emitted.heads) {
+          const step = out.find((item) => item.id === id);
+          if (step) step.lane_label = label || undefined;
+        }
+        laneHeads.push(...emitted.heads);
+        laneTails.push(...emitted.tails);
+      }
+
+      if (!laneHeads.length) continue;
+      if (heads === null) heads = laneHeads;
+      if (laneTails.length) current = laneTails;
       continue;
     }
 
