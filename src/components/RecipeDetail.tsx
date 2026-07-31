@@ -10,7 +10,8 @@ import { categorySlug, isScalable, scaleRecipe, type Recipe } from "@/lib/recipe
 export function RecipeDetail({ recipe: source }: { recipe: Recipe }) {
   const { isAdmin } = useAdminSession();
   const scalable = isScalable(source);
-  const [cups, setCups] = useState("2");
+  const scaleLabel = source.scale?.label ?? "Servings";
+  const [cups, setCups] = useState(String(source.scale?.default ?? 2));
   const parsed = Number(cups);
   const servings = Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
   const recipe = scalable ? scaleRecipe(source, servings) : source;
@@ -92,7 +93,7 @@ export function RecipeDetail({ recipe: source }: { recipe: Recipe }) {
           {scalable ? (
             <div className="mb-3 flex items-center gap-3 rounded-lg border border-border bg-background/60 px-3 py-2.5">
               <label htmlFor="cups" className="text-sm font-medium text-foreground">
-                Cups
+                {scaleLabel}
               </label>
               <input
                 id="cups"
