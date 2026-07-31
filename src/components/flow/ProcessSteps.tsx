@@ -1,6 +1,11 @@
 import { Fragment, useState } from "react";
 
-import { toProcessRows, type ProcessRow, type ProcessStep } from "@/lib/recipes";
+import {
+  toProcessRows,
+  type ProcessBranch,
+  type ProcessRow,
+  type ProcessStep,
+} from "@/lib/recipes";
 
 /**
  * Step connector — diagram-style flow that works at every width. Rows stack
@@ -14,6 +19,11 @@ export function ProcessSteps({ steps }: { steps: ProcessStep[] }) {
     return <p className="text-sm text-muted-foreground">No steps yet.</p>;
   }
 
+  return <RowList rows={rows} />;
+}
+
+/** Renders a chain of rows joined by connectors. Recurses for nested options. */
+function RowList({ rows, nested = false }: { rows: ProcessRow[]; nested?: boolean }) {
   return (
     <ol className="flex flex-col items-center">
       {rows.map((row, index) => (
@@ -24,7 +34,7 @@ export function ProcessSteps({ steps }: { steps: ProcessStep[] }) {
             </li>
           ) : null}
           <li className="w-full">
-            <Row row={row} />
+            <Row row={row} nested={nested} />
           </li>
         </Fragment>
       ))}
@@ -32,7 +42,7 @@ export function ProcessSteps({ steps }: { steps: ProcessStep[] }) {
   );
 }
 
-function Row({ row }: { row: ProcessRow }) {
+function Row({ row, nested = false }: { row: ProcessRow; nested?: boolean }) {
   if (row.kind === "options") {
     return (
       <div className="mx-auto w-full max-w-xl">
@@ -53,7 +63,7 @@ function Row({ row }: { row: ProcessRow }) {
 
   return (
     <div className="mx-auto w-full max-w-xl">
-      <StepCard step={row.steps[0]} />
+      <StepCard step={row.steps[0]} branch={nested} />
     </div>
   );
 }
@@ -90,20 +100,19 @@ const cardClass =
  * Mutually exclusive paths: pill switcher on top, then the selected branch
  * rendered as its own chain of step cards so it reads like the rest of the flow.
  */
-function OptionsLane({ branches }: { branches: ProcessStep[][] }) {
+function OptionsLane({ branches }: { branches: ProcessBranch[] }) {
   const [active, setActive] = useState(0);
   const index = active < branches.length ? active : 0;
-  const steps = branches[index];
+  const branch = branches[index];
 
   return (
     <div className="relative rounded-[1.4rem] border border-dashed border-primary/35 bg-primary/[0.03] p-4 sm:p-5">
       <div className="flex flex-wrap justify-center gap-1.5">
-        {branches.map((branch, i) => {
+        {branches.map((item, i) => {
           const selected = i === index;
-          const head = branch[0];
           return (
             <button
-              key={head.id}
+              key={i}
               type="button"
               onClick={() => setActive(i)}
               aria-pressed={selected}
@@ -113,38 +122,32 @@ function OptionsLane({ branches }: { branches: ProcessStep[][] }) {
                   : "border-border/70 bg-transparent text-muted-foreground hover:border-primary/40 hover:text-foreground"
               }`}
             >
-              {head.branch_label || head.label}
+              {branchTitle(item, i)}
             </button>
           );
         })}
       </div>
 
-      <ol className="mt-4 flex flex-col">
-        {steps.map((step, i) => (
-          <Fragment key={step.id}>
-            {i > 0 ? (
-              <li aria-hidden="true" className="w-full">
-                <LineConnector />
-              </li>
-            ) : null}
-            <li className="w-full">
-              <StepCard step={step} branch hideBranchLabel={i === 0} />
-            </li>
-          </Fragment>
-        ))}
-      </ol>
+      <div className="mt-4">
+        <RowList rows={branch.rows} nested />
+      </div>
     </div>
   );
+}
+
+function branchTitle(branch: ProcessBranch, index: number): string {
+  if (branch.label.trim()) return branch.label;
+  const first = branch.rows[0];
+  if (first?.kind === "steps" && first.steps[0]) return first.steps[0].label;
+  return `Option ${index + 1}`;
 }
 
 function StepCard({
   step,
   branch = false,
-  hideBranchLabel = false,
 }: {
   step: ProcessStep;
   branch?: boolean;
-  hideBranchLabel?: boolean;
 }) {
   return (
     <div
@@ -158,11 +161,6 @@ function StepCard({
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
       />
-      {step.branch_label && !hideBranchLabel ? (
-        <span className="mb-2.5 inline-flex items-center rounded-full border border-primary/40 bg-primary/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">
-          {step.branch_label}
-        </span>
-      ) : null}
       <p className="text-[0.98rem] font-semibold leading-snug tracking-[-0.01em] text-foreground">
         {step.label}
       </p>
