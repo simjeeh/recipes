@@ -46,12 +46,12 @@ export function SiteHeader() {
               className="w-full rounded-md border border-border bg-card py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/60 focus:outline-none"
             />
           </label>
-          <label className="shrink-0">
+          <label className="group relative block shrink-0">
             <span className="sr-only">Filter by section</span>
             <select
               value={category}
               onChange={(event) => setCategory(event.target.value as typeof category)}
-              className="rounded-md border border-border bg-card px-2 py-2 text-sm text-foreground focus:border-primary/60 focus:outline-none"
+              className="h-9 cursor-pointer appearance-none rounded-md border border-border bg-card py-2 pl-3 pr-9 text-sm text-foreground transition-colors hover:border-primary/40 focus:border-primary/60 focus:outline-none"
             >
               <option value="All">All</option>
               {RECIPE_CATEGORIES.map((option) => (
@@ -60,6 +60,10 @@ export function SiteHeader() {
                 </option>
               ))}
             </select>
+            <ChevronDown
+              className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-hover:text-primary"
+              aria-hidden="true"
+            />
           </label>
         </div>
 
