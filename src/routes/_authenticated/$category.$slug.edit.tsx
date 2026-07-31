@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Eye, EyeOff, Loader2, Lock, Plus, Trash2 } from "lucide-react";
+import { CircleDashed, Eye, EyeOff, Loader2, Lock, Plus, Trash2 } from "lucide-react";
 
 import type { Ingredient, ProcessStep, RecipeLink } from "@/lib/recipes";
 import { categorySlug } from "@/lib/recipes";
@@ -256,7 +256,7 @@ function EditRecipePage() {
           />
           <ul className="mt-4 space-y-3">
             {ingredients.map((ingredient, index) => (
-              <li key={index} className="grid grid-cols-[4rem_5rem_minmax(0,1fr)_auto_auto] items-center gap-2">
+              <li key={index} className="grid grid-cols-[4rem_5rem_minmax(0,1fr)_auto_auto_auto] items-center gap-2">
                 <input
                   aria-label="Amount"
                   placeholder="1"
@@ -297,6 +297,19 @@ function EditRecipePage() {
                   onClick={() =>
                     setIngredients((prev) =>
                       prev.map((item, i) => (i === index ? { ...item, secret: !item.secret } : item)),
+                    )
+                  }
+                />
+                <ToggleButton
+                  label="Mark ingredient optional"
+                  title={ingredient.optional ? "Optional ingredient" : "Required ingredient"}
+                  active={Boolean(ingredient.optional)}
+                  icon={<CircleDashed className="h-4 w-4" aria-hidden="true" />}
+                  onClick={() =>
+                    setIngredients((prev) =>
+                      prev.map((item, i) =>
+                        i === index ? { ...item, optional: !item.optional } : item,
+                      ),
                     )
                   }
                 />
