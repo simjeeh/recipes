@@ -133,14 +133,9 @@ export function PillLane({ children }: { children: ReactNode }) {
  * more lanes so the indicator sits next to the label (e.g. "Pot 1").
  */
 export function LaneScroll({ children }: { children: ReactNode }) {
-  const ref = useRef<HTMLDivElement>(null);
-
   return (
     <div className="relative md:hidden -mx-5 px-5 sm:-mx-8 sm:px-8">
-      <div
-        ref={ref}
-        className="no-scrollbar flex snap-x snap-mandatory flex-nowrap gap-4 overflow-x-auto"
-      >
+      <div className="no-scrollbar flex snap-x snap-mandatory flex-nowrap gap-4 overflow-x-auto">
         {children}
       </div>
     </div>
