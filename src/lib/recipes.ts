@@ -59,10 +59,15 @@ export function fuzzyMatch(query: string, target: string): boolean {
 }
 
 export function formatIngredient(ingredient: Ingredient): string {
-  return [ingredient.amount, ingredient.unit, ingredient.name]
-    .map((part) => (part ?? "").trim())
-    .filter(Boolean)
-    .join(" ");
+  const amount = (ingredient.amount ?? "").trim();
+  const unit = (ingredient.unit ?? "").trim();
+  const name = (ingredient.name ?? "").trim();
+
+  // Tight metric style: 100g sugar, 250ml milk. Imperial/volume units keep a space.
+  const tightMetric = /^(g|kg|mg|ml|l)$/i.test(unit) && /^[\d./-]+$/.test(amount);
+  const measure = tightMetric ? `${amount}${unit}` : [amount, unit].filter(Boolean).join(" ");
+
+  return [measure, name].filter(Boolean).join(" ");
 }
 
 /**
