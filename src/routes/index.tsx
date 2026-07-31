@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { EyeOff } from "lucide-react";
+import { EyeOff, Plus } from "lucide-react";
 
 import { useAdminSession } from "@/hooks/useAdminSession";
 import { useRecipeSearch } from "@/hooks/useRecipeSearch";
@@ -54,6 +54,18 @@ function Index() {
   return (
     <div className="mx-auto max-w-5xl px-5 py-12 sm:px-8 sm:py-16">
       <h1 className="sr-only">Recipes</h1>
+      {isAdmin ? (
+        <div className="mb-8 flex justify-end">
+          <Link
+            to="/recipe/new"
+            aria-label="Add a recipe"
+            className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm font-semibold transition-colors hover:border-primary/60 hover:text-primary"
+          >
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            New recipe
+          </Link>
+        </div>
+      ) : null}
       {sections.length === 0 ? (
         <p className="text-muted-foreground">
           {query || category !== "All"

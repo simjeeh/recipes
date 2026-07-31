@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRecipeNewRouteImport } from './routes/_authenticated/recipe.new'
 import { Route as RecipeSlugIndexRouteImport } from './routes/recipe.$slug.index'
 import { Route as AuthenticatedRecipeSlugEditRouteImport } from './routes/_authenticated/recipe.$slug.edit'
 
@@ -29,6 +30,11 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRecipeNewRoute = AuthenticatedRecipeNewRouteImport.update({
+  id: '/recipe/new',
+  path: '/recipe/new',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const RecipeSlugIndexRoute = RecipeSlugIndexRouteImport.update({
   id: '/recipe/$slug/',
   path: '/recipe/$slug/',
@@ -44,12 +50,14 @@ const AuthenticatedRecipeSlugEditRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/recipe/new': typeof AuthenticatedRecipeNewRoute
   '/recipe/$slug/': typeof RecipeSlugIndexRoute
   '/recipe/$slug/edit': typeof AuthenticatedRecipeSlugEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/recipe/new': typeof AuthenticatedRecipeNewRoute
   '/recipe/$slug': typeof RecipeSlugIndexRoute
   '/recipe/$slug/edit': typeof AuthenticatedRecipeSlugEditRoute
 }
@@ -58,19 +66,22 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/recipe/new': typeof AuthenticatedRecipeNewRoute
   '/recipe/$slug/': typeof RecipeSlugIndexRoute
   '/_authenticated/recipe/$slug/edit': typeof AuthenticatedRecipeSlugEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/recipe/$slug/' | '/recipe/$slug/edit'
+  fullPaths:
+    '/' | '/auth' | '/recipe/new' | '/recipe/$slug/' | '/recipe/$slug/edit'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/recipe/$slug' | '/recipe/$slug/edit'
+  to: '/' | '/auth' | '/recipe/new' | '/recipe/$slug' | '/recipe/$slug/edit'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/recipe/new'
     | '/recipe/$slug/'
     | '/_authenticated/recipe/$slug/edit'
   fileRoutesById: FileRoutesById
@@ -105,6 +116,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/recipe/new': {
+      id: '/_authenticated/recipe/new'
+      path: '/recipe/new'
+      fullPath: '/recipe/new'
+      preLoaderRoute: typeof AuthenticatedRecipeNewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/recipe/$slug/': {
       id: '/recipe/$slug/'
       path: '/recipe/$slug'
@@ -123,10 +141,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedRecipeNewRoute: typeof AuthenticatedRecipeNewRoute
   AuthenticatedRecipeSlugEditRoute: typeof AuthenticatedRecipeSlugEditRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedRecipeNewRoute: AuthenticatedRecipeNewRoute,
   AuthenticatedRecipeSlugEditRoute: AuthenticatedRecipeSlugEditRoute,
 }
 
@@ -142,13 +162,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
