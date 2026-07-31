@@ -382,12 +382,6 @@ function EditRecipePage() {
                         }
                         className={`${inputClass} mt-3`}
                       />
-                      <LinkPicker
-                        className="mt-3 w-full"
-                        options={linkOptions}
-                        value={step.link}
-                        onChange={(link) => updateStep(setGroups, gIndex, sIndex, { link })}
-                      />
                     </div>
                   ))}
                 </div>

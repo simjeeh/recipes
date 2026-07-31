@@ -93,16 +93,6 @@ function StepCard({ step, branch = false }: { step: ProcessStep; branch?: boolea
       {step.detail ? (
         <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{step.detail}</p>
       ) : null}
-      {step.link ? (
-        <Link
-          to="/$category/$slug"
-          params={{ category: step.link.category, slug: step.link.slug }}
-          className="mt-3 inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-primary transition-colors hover:bg-primary/20"
-        >
-          View recipe
-          <ArrowUpRight className="h-3 w-3" aria-hidden="true" />
-        </Link>
-      ) : null}
       {step.secret ? (
         <span className="mt-3 inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
           Secret
