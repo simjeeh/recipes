@@ -2,9 +2,29 @@ import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { CircleDashed, Eye, EyeOff, Loader2, Lock, Plus, Sigma, Trash2 } from "lucide-react";
+import {
+  CircleDashed,
+  Columns2,
+  Eye,
+  EyeOff,
+  GitFork,
+  Loader2,
+  Lock,
+  Plus,
+  Rows3,
+  Sigma,
+  Trash2,
+} from "lucide-react";
 
 import { FormulaModal } from "@/components/FormulaModal";
+import {
+  LineConnector,
+  PillLane,
+  SplitConnector,
+  pillActiveClass,
+  pillClass,
+  pillIdleClass,
+} from "@/components/flow/flow-parts";
 
 import type { Ingredient, ProcessStep, RecipeLink, RecipeScale } from "@/lib/recipes";
 import type { ProcessBranch, ProcessRow } from "@/lib/recipes";
@@ -41,20 +61,25 @@ function newStep(): ProcessStep {
   return { id: `step-${Date.now()}-${stepCounter}`, label: "", parents: [] };
 }
 
-/** Switches a row between "at the same time" and "pick one" without losing steps. */
-function setRowMode(row: ProcessRow, options: boolean): ProcessRow {
-  if (options) {
-    if (row.kind === "options") return row;
-    return {
-      kind: "options",
-      branches: row.steps.map((step) => ({
-        label: step.branch_label ?? "",
-        rows: [{ kind: "steps", steps: [step] } as ProcessRow],
-      })),
-    };
-  }
-  if (row.kind === "steps") return row;
-  return { kind: "steps", steps: collectRowSteps(row.branches.flatMap((b) => b.rows)) };
+type RowKind = ProcessRow["kind"];
+
+/** Switches a row between a single chain, parallel lanes, and options. */
+function setRowMode(row: ProcessRow, kind: RowKind): ProcessRow {
+  if (row.kind === kind) return row;
+  const steps = rowSteps(row);
+  if (kind === "steps") return { kind: "steps", steps: steps.length ? steps : [newStep()] };
+  const groups = (steps.length ? steps : [newStep(), newStep()]).map((step) => ({
+    label: (kind === "options" ? step.branch_label : step.lane_label) ?? "",
+    rows: [{ kind: "steps", steps: [step] } as ProcessRow],
+  }));
+  const filled = groups.length > 1 ? groups : [...groups, newBranch()];
+  return kind === "options" ? { kind: "options", branches: filled } : { kind: "parallel", lanes: filled };
+}
+
+function rowSteps(row: ProcessRow): ProcessStep[] {
+  if (row.kind === "steps") return row.steps;
+  const groups = row.kind === "parallel" ? row.lanes : row.branches;
+  return collectRowSteps(groups.flatMap((group) => group.rows));
 }
 
 function newBranch(): ProcessBranch {
@@ -459,7 +484,7 @@ function EditRecipePage() {
   );
 }
 
-/** Recursive editor for a chain of process rows. Options nest inside options. */
+/** Recursive editor for a chain of process rows — mirrors the public flow. */
 function RowsEditor({
   rows,
   onChange,
@@ -477,40 +502,28 @@ function RowsEditor({
     ]);
 
   if (!rows.length) {
-    return <AddButton label="Add step" subtle={depth > 0} onClick={() => addAt(0)} />;
+    return (
+      <div className="flex justify-center">
+        <AddButton label="Add step" subtle={depth > 0} onClick={() => addAt(0)} />
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-3">
+    <div>
       {rows.map((row, rIndex) => {
         const patchRow = (next: ProcessRow) =>
           onChange(rows.map((item, i) => (i === rIndex ? next : item)));
         const dropRow = () => onChange(rows.filter((_, i) => i !== rIndex));
-        const isOptions = row.kind === "options";
+        const splits = row.kind === "parallel" || (row.kind === "steps" && row.steps.length > 1);
 
         return (
           <div key={rIndex}>
+            {rIndex > 0 ? (splits ? <SplitConnector /> : <LineConnector />) : null}
+
             <div className="rounded-xl border border-border/70 bg-card/40 p-3 sm:p-4">
-              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                <div className="inline-flex items-center gap-1 rounded-full border border-border bg-card p-1 text-[11px]">
-                  {[
-                    { value: false, label: "At the same time" },
-                    { value: true, label: "Pick one" },
-                  ].map((mode) => (
-                    <button
-                      key={String(mode.value)}
-                      type="button"
-                      onClick={() => patchRow(setRowMode(row, mode.value))}
-                      className={`rounded-full px-3 py-1 font-semibold transition-colors ${
-                        isOptions === mode.value
-                          ? "bg-primary/15 text-primary"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      {mode.label}
-                    </button>
-                  ))}
-                </div>
+              <div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+                <ModeSwitch kind={row.kind} onSelect={(kind) => patchRow(setRowMode(row, kind))} />
                 <RemoveButton label="Remove row" onClick={dropRow} />
               </div>
 
@@ -539,57 +552,16 @@ function RowsEditor({
                   </div>
                   <div className="mt-3 flex justify-center">
                     <AddButton
-                      label="Add step at the same time"
+                      label="Add simultaneous step"
                       subtle
                       onClick={() => patchRow({ kind: "steps", steps: [...row.steps, newStep()] })}
                     />
                   </div>
                 </>
+              ) : row.kind === "parallel" ? (
+                <LanesEditor row={row} depth={depth} patchRow={patchRow} dropRow={dropRow} />
               ) : (
-                <>
-                  <div className="space-y-3">
-                    {row.branches.map((branch, bIndex) => {
-                      const patchBranch = (next: ProcessBranch | null) => {
-                        const branches = row.branches
-                          .map((item, i) => (i === bIndex ? next : item))
-                          .filter((item): item is ProcessBranch => Boolean(item));
-                        if (!branches.length) dropRow();
-                        else patchRow({ kind: "options", branches });
-                      };
-                      return (
-                        <div
-                          key={bIndex}
-                          className="rounded-lg border border-dashed border-primary/35 bg-primary/[0.03] p-3"
-                        >
-                          <div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
-                            <input
-                              aria-label="Option name"
-                              placeholder={`Option ${bIndex + 1} name`}
-                              value={branch.label}
-                              onChange={(e) => patchBranch({ ...branch, label: e.target.value })}
-                              className={inputClass}
-                            />
-                            <RemoveButton label="Remove option" onClick={() => patchBranch(null)} />
-                          </div>
-                          <RowsEditor
-                            rows={branch.rows}
-                            depth={depth + 1}
-                            onChange={(next) => patchBranch({ ...branch, rows: next })}
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div className="mt-3 flex justify-center">
-                    <AddButton
-                      label="Add option"
-                      subtle
-                      onClick={() =>
-                        patchRow({ kind: "options", branches: [...row.branches, newBranch()] })
-                      }
-                    />
-                  </div>
-                </>
+                <OptionsEditor row={row} depth={depth} patchRow={patchRow} dropRow={dropRow} />
               )}
             </div>
 
@@ -599,6 +571,171 @@ function RowsEditor({
           </div>
         );
       })}
+    </div>
+  );
+}
+
+/** Icon-only row mode picker: one chain, parallel lanes, or exclusive options. */
+function ModeSwitch({ kind, onSelect }: { kind: RowKind; onSelect: (kind: RowKind) => void }) {
+  const modes: { value: RowKind; title: string; icon: React.ReactNode }[] = [
+    { value: "steps", title: "Single step", icon: <Rows3 className="h-4 w-4" aria-hidden="true" /> },
+    {
+      value: "parallel",
+      title: "Parallel lanes",
+      icon: <Columns2 className="h-4 w-4" aria-hidden="true" />,
+    },
+    { value: "options", title: "Options", icon: <GitFork className="h-4 w-4" aria-hidden="true" /> },
+  ];
+  return (
+    <div className="inline-flex min-w-0 items-center gap-1 rounded-full border border-border bg-card p-1">
+      {modes.map((mode) => (
+        <button
+          key={mode.value}
+          type="button"
+          title={mode.title}
+          aria-label={mode.title}
+          aria-pressed={kind === mode.value}
+          onClick={() => onSelect(mode.value)}
+          className={`inline-flex h-7 w-7 items-center justify-center rounded-full transition-colors ${
+            kind === mode.value
+              ? "bg-primary/15 text-primary"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          {mode.icon}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** Simultaneous lanes, shown side by side exactly like the public flow. */
+function LanesEditor({
+  row,
+  depth,
+  patchRow,
+  dropRow,
+}: {
+  row: Extract<ProcessRow, { kind: "parallel" }>;
+  depth: number;
+  patchRow: (next: ProcessRow) => void;
+  dropRow: () => void;
+}) {
+  const patchLane = (index: number, next: ProcessBranch | null) => {
+    const lanes = row.lanes
+      .map((item, i) => (i === index ? next : item))
+      .filter((item): item is ProcessBranch => Boolean(item));
+    if (!lanes.length) dropRow();
+    else patchRow({ kind: "parallel", lanes });
+  };
+
+  return (
+    <>
+      <div className="grid gap-3 md:grid-cols-2">
+        {row.lanes.map((lane, index) => (
+          <div key={index} className="rounded-lg border border-border/60 bg-card/30 p-3">
+            <div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+              <input
+                aria-label="Lane name"
+                placeholder={`Lane ${index + 1} name`}
+                value={lane.label}
+                onChange={(e) => patchLane(index, { ...lane, label: e.target.value })}
+                className={inputClass}
+              />
+              <RemoveButton label="Remove lane" onClick={() => patchLane(index, null)} />
+            </div>
+            <RowsEditor
+              rows={lane.rows}
+              depth={depth + 1}
+              onChange={(next) => patchLane(index, { ...lane, rows: next })}
+            />
+          </div>
+        ))}
+      </div>
+      <div className="mt-3 flex justify-center">
+        <AddButton
+          label="Add lane"
+          subtle
+          onClick={() => patchRow({ kind: "parallel", lanes: [...row.lanes, newBranch()] })}
+        />
+      </div>
+    </>
+  );
+}
+
+/** Exclusive options, edited through the same pill lane the reader sees. */
+function OptionsEditor({
+  row,
+  depth,
+  patchRow,
+  dropRow,
+}: {
+  row: Extract<ProcessRow, { kind: "options" }>;
+  depth: number;
+  patchRow: (next: ProcessRow) => void;
+  dropRow: () => void;
+}) {
+  const [active, setActive] = useState(0);
+  const index = active < row.branches.length ? active : 0;
+  const branch = row.branches[index];
+
+  const patchBranch = (next: ProcessBranch | null) => {
+    const branches = row.branches
+      .map((item, i) => (i === index ? next : item))
+      .filter((item): item is ProcessBranch => Boolean(item));
+    if (!branches.length) dropRow();
+    else {
+      patchRow({ kind: "options", branches });
+      if (index >= branches.length) setActive(branches.length - 1);
+    }
+  };
+
+  return (
+    <div className="rounded-[1.1rem] border border-dashed border-primary/35 bg-primary/[0.03] p-3">
+      <PillLane>
+        {row.branches.map((item, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => setActive(i)}
+            aria-pressed={i === index}
+            className={`${pillClass} ${i === index ? pillActiveClass : pillIdleClass}`}
+          >
+            {item.label.trim() || `Option ${i + 1}`}
+          </button>
+        ))}
+        <button
+          type="button"
+          aria-label="Add option"
+          title="Add option"
+          onClick={() => {
+            patchRow({ kind: "options", branches: [...row.branches, newBranch()] });
+            setActive(row.branches.length);
+          }}
+          className={`${pillClass} border-dashed border-border/70 text-muted-foreground/70 hover:border-primary/60 hover:text-primary`}
+        >
+          <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+        </button>
+      </PillLane>
+
+      <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+        <input
+          aria-label="Option name"
+          placeholder={`Option ${index + 1} name`}
+          value={branch.label}
+          onChange={(e) => patchBranch({ ...branch, label: e.target.value })}
+          className={inputClass}
+        />
+        <RemoveButton label="Remove option" onClick={() => patchBranch(null)} />
+      </div>
+
+      <div className="mt-3">
+        <RowsEditor
+          rows={branch.rows}
+          depth={depth + 1}
+          onChange={(next) => patchBranch({ ...branch, rows: next })}
+        />
+      </div>
     </div>
   );
 }
