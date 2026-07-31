@@ -4,9 +4,16 @@ import { z } from "zod";
 
 import type { Database } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import type { Ingredient, ProcessStep, Recipe, RecipeSummary } from "./recipes";
+import type {
+  Ingredient,
+  ProcessStep,
+  Recipe,
+  RecipeCategory,
+  RecipeSummary,
+} from "./recipes";
 
-const RECIPE_COLUMNS = "id, title, slug, ingredients, process, is_hidden, created_at, updated_at";
+const RECIPE_COLUMNS =
+  "id, title, slug, category, ingredients, process, is_hidden, created_at, updated_at";
 
 function publicClient() {
   const url = process.env.SUPABASE_URL!;
@@ -30,6 +37,7 @@ type Row = {
   id: string;
   title: string;
   slug: string;
+  category: string;
   ingredients: unknown;
   process: unknown;
   is_hidden: boolean;
@@ -42,6 +50,7 @@ function toRecipe(row: Row): Recipe {
     id: row.id,
     title: row.title,
     slug: row.slug,
+    category: (row.category as RecipeCategory) ?? "Main",
     ingredients: (row.ingredients as Ingredient[]) ?? [],
     process: (row.process as ProcessStep[]) ?? [],
     is_hidden: row.is_hidden,
@@ -56,6 +65,7 @@ function toSummary(row: Row): RecipeSummary {
     id: recipe.id,
     title: recipe.title,
     slug: recipe.slug,
+    category: recipe.category,
     is_hidden: recipe.is_hidden,
     updated_at: recipe.updated_at,
     ingredientCount: recipe.ingredients.length,
