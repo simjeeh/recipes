@@ -24,7 +24,8 @@ export function RecipeDetail({ recipe }: { recipe: Recipe }) {
             {recipe.title}
           </h1>
           <p className="mt-3 text-sm text-muted-foreground">
-            {recipe.ingredients.length} ingredients · {recipe.process.length} steps
+            {recipe.ingredients.length} ingredients
+            {recipe.process.length > 0 ? ` · ${recipe.process.length} steps` : null}
           </p>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-2">
@@ -59,17 +60,19 @@ export function RecipeDetail({ recipe }: { recipe: Recipe }) {
         </div>
       </section>
 
-      <section aria-labelledby="process-heading" className="mt-16">
-        <h2
-          id="process-heading"
-          className="text-xs font-bold uppercase tracking-[0.2em] text-primary"
-        >
-          Process
-        </h2>
-        <div className="mt-5">
-          <ProcessSteps steps={recipe.process} />
-        </div>
-      </section>
+      {recipe.process.length > 0 ? (
+        <section aria-labelledby="process-heading" className="mt-16">
+          <h2
+            id="process-heading"
+            className="text-xs font-bold uppercase tracking-[0.2em] text-primary"
+          >
+            Process
+          </h2>
+          <div className="mt-5">
+            <ProcessSteps steps={recipe.process} />
+          </div>
+        </section>
+      ) : null}
     </article>
   );
 }
