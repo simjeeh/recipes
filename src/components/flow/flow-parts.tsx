@@ -18,14 +18,34 @@ export function SplitConnector() {
   return (
     <div className="flex flex-col items-center py-1">
       <span className="h-6 w-px bg-gradient-to-b from-primary/10 to-primary/50" />
-      <div className="hidden w-1/2 md:block">
-        <div className="h-px w-full bg-gradient-to-r from-primary/20 via-primary/50 to-primary/20" />
-        <div className="flex justify-between">
-          <span className="h-6 w-px bg-gradient-to-b from-primary/50 to-primary/10" />
-          <span className="h-6 w-px bg-gradient-to-b from-primary/50 to-primary/10" />
-        </div>
+      <div className="hidden w-full md:block">
+        <LaneBar />
+        <LaneStubs />
       </div>
       <span className="h-6 w-px bg-gradient-to-b from-primary/50 to-primary/10 md:hidden" />
+    </div>
+  );
+}
+
+/**
+ * Horizontal bar spanning the centers of two lane columns laid out as
+ * `grid-cols-2 gap-4`, so connectors line up with the lane cards above/below.
+ */
+function LaneBar() {
+  return (
+    <div className="grid grid-cols-2 gap-4">
+      <div className="-mr-2 ml-[50%] h-px bg-primary/40" />
+      <div className="-ml-2 mr-[50%] h-px bg-primary/40" />
+    </div>
+  );
+}
+
+/** Two short vertical stubs centered on each lane column. */
+function LaneStubs() {
+  return (
+    <div className="grid grid-cols-2 gap-4">
+      <span className="mx-auto h-6 w-px bg-primary/40" />
+      <span className="mx-auto h-6 w-px bg-primary/40" />
     </div>
   );
 }
@@ -40,12 +60,9 @@ export const pillClass =
 export function MergeConnector() {
   return (
     <div className="flex flex-col items-center py-1">
-      <div className="hidden w-1/2 md:block">
-        <div className="flex justify-between">
-          <span className="h-6 w-px bg-gradient-to-b from-primary/10 to-primary/50" />
-          <span className="h-6 w-px bg-gradient-to-b from-primary/10 to-primary/50" />
-        </div>
-        <div className="h-px w-full bg-gradient-to-r from-primary/20 via-primary/50 to-primary/20" />
+      <div className="hidden w-full md:block">
+        <LaneStubs />
+        <LaneBar />
       </div>
       <span className="h-6 w-px bg-gradient-to-b from-primary/10 to-primary/50 md:hidden" />
       <span className="h-6 w-px bg-gradient-to-b from-primary/50 to-primary/10" />
