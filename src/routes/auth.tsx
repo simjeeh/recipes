@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Loader2, ShieldCheck } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
+import { ensureOrcaAccount, ORCA_USERNAME } from "@/lib/orca.functions";
 
 const GENERIC_ERROR = "Invalid credentials. Please try again.";
 
@@ -26,7 +27,7 @@ type Stage = "password" | "totp" | "enroll";
 function AuthPage() {
   const navigate = useNavigate();
   const [stage, setStage] = useState<Stage>("password");
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState(ORCA_USERNAME);
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +47,17 @@ function AuthPage() {
     setError(null);
     setBusy(true);
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+    const ensured = await ensureOrcaAccount({ data: { username, password } });
+    if (!ensured.ok || !ensured.email) {
+      setError(GENERIC_ERROR);
+      setBusy(false);
+      return;
+    }
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: ensured.email,
+      password,
+    });
     if (signInError) {
       setError(GENERIC_ERROR);
       setBusy(false);
@@ -116,14 +127,14 @@ function AuthPage() {
 
         {stage === "password" ? (
           <form onSubmit={onPasswordSubmit} className="mt-6 space-y-4">
-            <Field label="Email" htmlFor="email">
+            <Field label="Username" htmlFor="username">
               <input
-                id="email"
-                type="email"
+                id="username"
+                type="text"
                 autoComplete="username"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 className="w-full rounded-md border border-border bg-input px-3 py-2.5 text-foreground outline-none placeholder:text-muted-foreground"
               />
             </Field>
