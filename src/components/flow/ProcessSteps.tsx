@@ -75,9 +75,15 @@ function Row({ row, nested = false }: { row: ProcessRow; nested?: boolean }) {
   }
 
   if (row.kind === "parallel") {
-    const Lane = ({ lane }: { lane: ProcessBranch }) => (
+    const Lane = ({
+      lane,
+      arrow,
+    }: {
+      lane: ProcessBranch;
+      arrow?: "left" | "right";
+    }) => (
       <div className="flex h-full flex-col">
-        {lane.label ? <LaneLabel>{lane.label}</LaneLabel> : null}
+        {lane.label ? <LaneLabel arrow={arrow}>{lane.label}</LaneLabel> : null}
         <RowList rows={lane.rows} nested />
         <span
           aria-hidden="true"
@@ -89,11 +95,19 @@ function Row({ row, nested = false }: { row: ProcessRow; nested?: boolean }) {
     return (
       <div className="relative">
         <LaneScroll>
-          {row.lanes.map((lane, index) => (
-            <div key={index} className="w-[82vw] shrink-0 snap-center">
-              <Lane lane={lane} />
-            </div>
-          ))}
+          {row.lanes.map((lane, index) => {
+            const arrow =
+              index === 0
+                ? ("right" as const)
+                : index === row.lanes.length - 1
+                  ? ("left" as const)
+                  : undefined;
+            return (
+              <div key={index} className="w-[82vw] shrink-0 snap-center">
+                <Lane lane={lane} arrow={arrow} />
+              </div>
+            );
+          })}
         </LaneScroll>
         <div className="hidden grid-cols-2 items-stretch gap-4 md:grid">
           {row.lanes.map((lane, index) => (
