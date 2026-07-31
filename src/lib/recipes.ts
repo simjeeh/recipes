@@ -133,12 +133,14 @@ export function stepEdges(steps: ProcessStep[]): { from: string; to: string; lab
 
 /**
  * A row in the process flow. `steps` holds one step (plain) or several done at
- * the same time; `options` holds mutually exclusive branches, each an ordered
- * chain of steps.
+ * the same time; `options` holds mutually exclusive branches. Each branch is a
+ * list of rows, so options can nest inside options.
  */
 export type ProcessRow =
   | { kind: "steps"; steps: ProcessStep[] }
-  | { kind: "options"; branches: ProcessStep[][] };
+  | { kind: "options"; branches: ProcessBranch[] };
+
+export type ProcessBranch = { label: string; rows: ProcessRow[] };
 
 /** Steps reachable from `rootId` and from no other branch root. */
 function exclusiveChain(steps: ProcessStep[], rootId: string, otherRoots: string[]): ProcessStep[] {
@@ -185,7 +187,11 @@ export function toProcessRows(steps: ProcessStep[]): ProcessRow[] {
           .filter((step) => !consumed.has(step.id))
           .sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
         rest.forEach((step) => consumed.add(step.id));
-        return [head, ...rest];
+        return {
+          label: head.branch_label ?? "",
+          // Recurse so nested alternatives inside a branch become their own rows.
+          rows: toProcessRows([head, ...rest]),
+        };
       });
       remaining.forEach((step) => consumed.add(step.id));
       rows.push({ kind: "options", branches });
@@ -203,39 +209,61 @@ export function toProcessRows(steps: ProcessStep[]): ProcessRow[] {
 /** Inverse of `toProcessRows` — rebuilds parent links from row structure. */
 export function rowsToSteps(rows: ProcessRow[]): ProcessStep[] {
   const result: ProcessStep[] = [];
-  let tails: string[] = [];
+  emitRows(rows, [], result);
+  return result;
+}
+
+/** Walks rows depth-first, wiring parents; returns the head and tail step ids. */
+function emitRows(
+  rows: ProcessRow[],
+  incoming: string[],
+  out: ProcessStep[],
+): { heads: string[]; tails: string[] } {
+  let heads: string[] | null = null;
+  let current = incoming;
 
   for (const row of rows) {
     if (row.kind === "steps") {
       const steps = row.steps.filter((step) => step.label.trim() || step.detail?.trim());
       if (!steps.length) continue;
       for (const step of steps) {
-        result.push({ ...step, parents: tails, alternative: false });
+        out.push({ ...step, parents: current, alternative: false, branch_label: undefined });
       }
-      tails = steps.map((step) => step.id);
+      if (heads === null) heads = steps.map((step) => step.id);
+      current = steps.map((step) => step.id);
       continue;
     }
 
-    const branches = row.branches
-      .map((branch) => branch.filter((step) => step.label.trim() || step.detail?.trim()))
-      .filter((branch) => branch.length);
-    if (!branches.length) continue;
-
+    const rowHeads: string[] = [];
     const nextTails: string[] = [];
-    for (const branch of branches) {
-      branch.forEach((step, index) => {
-        result.push({
-          ...step,
-          parents: index === 0 ? tails : [branch[index - 1].id],
-          alternative: index === 0,
-        });
-      });
-      nextTails.push(branch[branch.length - 1].id);
+
+    for (const branch of row.branches) {
+      const emitted = emitRows(branch.rows, current, out);
+      if (!emitted.heads.length) continue;
+      const label = branch.label?.trim();
+      for (const id of emitted.heads) {
+        const step = out.find((item) => item.id === id);
+        if (!step) continue;
+        step.alternative = true;
+        step.branch_label = step.branch_label || label || undefined;
+      }
+      rowHeads.push(...emitted.heads);
+      nextTails.push(...emitted.tails);
     }
-    tails = nextTails;
+
+    if (!rowHeads.length) continue;
+    if (heads === null) heads = rowHeads;
+    if (nextTails.length) current = nextTails;
   }
 
-  return result;
+  return { heads: heads ?? [], tails: current };
+}
+
+/** All steps inside a row tree, in order. */
+export function collectRowSteps(rows: ProcessRow[]): ProcessStep[] {
+  return rows.flatMap((row) =>
+    row.kind === "steps" ? row.steps : row.branches.flatMap((branch) => collectRowSteps(branch.rows)),
+  );
 }
 
 export function recipeDescription(recipe: Recipe): string {
