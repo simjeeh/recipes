@@ -8,6 +8,7 @@ import {
 } from "@/lib/recipes";
 import {
   LaneLabel,
+  LaneScroll,
   LineConnector,
   MergeConnector,
   PillLane,

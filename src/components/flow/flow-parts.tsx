@@ -127,6 +127,55 @@ export function PillLane({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * Full-width horizontal scroll container for parallel lanes on mobile.
+ * Each lane snaps to the centre and edge arrows hint at more lanes.
+ */
+export function LaneScroll({ children }: { children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [edges, setEdges] = useState({ left: false, right: false });
+
+  const measure = useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+    setEdges({
+      left: el.scrollLeft > 4,
+      right: el.scrollLeft + el.clientWidth < el.scrollWidth - 4,
+    });
+  }, []);
+
+  useEffect(() => {
+    measure();
+    const el = ref.current;
+    if (!el) return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    window.addEventListener("resize", measure);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [measure]);
+
+  const nudge = (direction: -1 | 1) => {
+    ref.current?.scrollBy({ left: direction * 260, behavior: "smooth" });
+  };
+
+  return (
+    <div className="relative md:hidden -mx-5 px-5 sm:-mx-8 sm:px-8">
+      <div
+        ref={ref}
+        onScroll={measure}
+        className="no-scrollbar flex snap-x snap-mandatory flex-nowrap gap-4 overflow-x-auto"
+      >
+        {children}
+      </div>
+      <EdgeArrow side="left" visible={edges.left} onClick={() => nudge(-1)} />
+      <EdgeArrow side="right" visible={edges.right} onClick={() => nudge(1)} />
+    </div>
+  );
+}
+
 function EdgeArrow({
   side,
   visible,
