@@ -39,6 +39,65 @@ function newStep(): ProcessStep {
   return { id: `step-${Date.now()}-${stepCounter}`, label: "", parents: [] };
 }
 
+/** Switches a row between "at the same time" and "pick one" without losing steps. */
+function setRowMode(row: ProcessRow, options: boolean): ProcessRow {
+  if (options) {
+    if (row.kind === "options") return row;
+    return { kind: "options", branches: row.steps.map((step) => [step]) };
+  }
+  if (row.kind === "steps") return row;
+  return { kind: "steps", steps: row.branches.flat() };
+}
+
+function StepEditor({
+  step,
+  onChange,
+  onRemove,
+  showBranchLabel = true,
+}: {
+  step: ProcessStep;
+  onChange: (patch: Partial<ProcessStep>) => void;
+  onRemove: () => void;
+  showBranchLabel?: boolean;
+}) {
+  return (
+    <div className="rounded-lg border border-border bg-card p-4">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2">
+        <input
+          aria-label="Step label"
+          placeholder="Blend the base"
+          value={step.label}
+          onChange={(e) => onChange({ label: e.target.value })}
+          className={inputClass}
+        />
+        <SecretToggle
+          label="Mark step secret"
+          active={Boolean(step.secret)}
+          onClick={() => onChange({ secret: !step.secret })}
+        />
+        <RemoveButton label="Remove step" onClick={onRemove} />
+      </div>
+      <textarea
+        aria-label="Step detail"
+        placeholder="Optional detail"
+        rows={2}
+        value={step.detail ?? ""}
+        onChange={(e) => onChange({ detail: e.target.value })}
+        className={`${inputClass} mt-3 resize-y`}
+      />
+      {showBranchLabel ? (
+        <input
+          aria-label="Option name"
+          placeholder="Option name (optional)"
+          value={step.branch_label ?? ""}
+          onChange={(e) => onChange({ branch_label: e.target.value })}
+          className={`${inputClass} mt-3`}
+        />
+      ) : null}
+    </div>
+  );
+}
+
 
 function EditRecipePage() {
   const { category, slug } = Route.useParams();
