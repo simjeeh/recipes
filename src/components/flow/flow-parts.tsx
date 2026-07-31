@@ -33,6 +33,27 @@ export function SplitConnector() {
 export const pillClass =
   "shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] transition-colors";
 
+/**
+ * Inverse of SplitConnector: two lines rise from the lane centers, join into a
+ * horizontal bar and drop a single stem into the next (converging) step.
+ */
+export function MergeConnector() {
+  return (
+    <div className="flex flex-col items-center py-1">
+      <div className="hidden w-1/2 md:block">
+        <div className="flex justify-between">
+          <span className="h-6 w-px bg-gradient-to-b from-primary/10 to-primary/50" />
+          <span className="h-6 w-px bg-gradient-to-b from-primary/10 to-primary/50" />
+        </div>
+        <div className="h-px w-full bg-gradient-to-r from-primary/20 via-primary/50 to-primary/20" />
+      </div>
+      <span className="h-6 w-px bg-gradient-to-b from-primary/10 to-primary/50 md:hidden" />
+      <span className="h-6 w-px bg-gradient-to-b from-primary/50 to-primary/10" />
+    </div>
+  );
+}
+  "shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] transition-colors";
+
 export const pillActiveClass = "border-primary/60 bg-primary/15 text-primary";
 export const pillIdleClass =
   "border-border/70 bg-transparent text-muted-foreground hover:border-primary/40 hover:text-foreground";

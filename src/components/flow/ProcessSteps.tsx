@@ -9,6 +9,7 @@ import {
 import {
   LaneLabel,
   LineConnector,
+  MergeConnector,
   PillLane,
   SplitConnector,
   cardClass,
@@ -40,7 +41,13 @@ function RowList({ rows, nested = false }: { rows: ProcessRow[]; nested?: boolea
         <Fragment key={index}>
           {index > 0 ? (
             <li aria-hidden="true" className="w-full">
-              {splits(row) ? <SplitConnector /> : <LineConnector />}
+              {splits(row) ? (
+                <SplitConnector />
+              ) : splits(rows[index - 1]) ? (
+                <MergeConnector />
+              ) : (
+                <LineConnector />
+              )}
             </li>
           ) : null}
           <li className="w-full">
