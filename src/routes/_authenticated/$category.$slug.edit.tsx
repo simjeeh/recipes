@@ -25,6 +25,55 @@ export const Route = createFileRoute("/_authenticated/$category/$slug/edit")({
 const inputClass =
   "w-full rounded-md border border-border bg-input px-3 py-2 text-sm text-foreground outline-none";
 
+let stepCounter = 0;
+
+function newStep(): ProcessStep {
+  stepCounter += 1;
+  return { id: `step-${Date.now()}-${stepCounter}`, label: "", parents: [] };
+}
+
+function toGroups(process: ProcessStep[]): ProcessStep[][] {
+  const byId = new Map(process.map((step) => [step.id, step]));
+  const depths = new Map<string, number>();
+  const depthOf = (step: ProcessStep, seen: Set<string>): number => {
+    if (depths.has(step.id)) return depths.get(step.id)!;
+    if (seen.has(step.id)) return 0;
+    seen.add(step.id);
+    const parents = (step.parents ?? []).map((id) => byId.get(id)).filter(Boolean) as ProcessStep[];
+    const depth = parents.length === 0 ? 0 : Math.max(...parents.map((p) => depthOf(p, seen))) + 1;
+    depths.set(step.id, depth);
+    return depth;
+  };
+  const groups: ProcessStep[][] = [];
+  for (const step of process) {
+    const depth = depthOf(step, new Set());
+    (groups[depth] ??= []).push(step);
+  }
+  return groups.filter(Boolean);
+}
+
+function fromGroups(groups: ProcessStep[][]): ProcessStep[] {
+  const result: ProcessStep[] = [];
+  groups.forEach((group, index) => {
+    const parents = index === 0 ? [] : groups[index - 1].map((step) => step.id);
+    for (const step of group) result.push({ ...step, parents });
+  });
+  return result;
+}
+
+function updateStep(
+  setGroups: React.Dispatch<React.SetStateAction<ProcessStep[][]>>,
+  gIndex: number,
+  sIndex: number,
+  patch: Partial<ProcessStep>,
+) {
+  setGroups((prev) =>
+    prev.map((group, i) =>
+      i === gIndex ? group.map((step, j) => (j === sIndex ? { ...step, ...patch } : step)) : group,
+    ),
+  );
+}
+
 function EditRecipePage() {
   const { category, slug } = Route.useParams();
   const navigate = useNavigate();
@@ -360,6 +409,42 @@ function RemoveButton({ label, onClick }: { label: string; onClick: () => void }
       className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:border-destructive hover:text-destructive"
     >
       <Trash2 className="h-4 w-4" aria-hidden="true" />
+    </button>
+  );
+}
+
+function AddButton({
+  label,
+  onClick,
+  subtle,
+}: {
+  label: string;
+  onClick: () => void;
+  subtle?: boolean;
+}) {
+  if (subtle) {
+    return (
+      <button
+        type="button"
+        aria-label={label}
+        title={label}
+        onClick={onClick}
+        className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-border/70 px-3 py-1 text-[11px] font-medium text-muted-foreground/70 transition-colors hover:border-primary/60 hover:text-primary"
+      >
+        <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+        {label}
+      </button>
+    );
+  }
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-white/5 hover:text-primary"
+    >
+      <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+      {label}
     </button>
   );
 }
