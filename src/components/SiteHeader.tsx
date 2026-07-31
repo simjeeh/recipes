@@ -65,8 +65,8 @@ export function SiteHeader() {
             </SelectTrigger>
             <SelectContent
               align="start"
-              sideOffset={-4}
-              className="w-[var(--radix-select-trigger-width)] min-w-[var(--radix-select-trigger-width)] rounded-t-none rounded-b-lg border-x border-b border-t-0 border-border bg-card p-1 shadow-none data-[side=bottom]:translate-y-0"
+              sideOffset={-1}
+              className="w-[var(--radix-select-trigger-width)] min-w-[var(--radix-select-trigger-width)] rounded-t-none rounded-b-lg border-x border-b border-t-0 border-border bg-card p-1 shadow-none"
             >
               <SelectItem
                 value="All"
