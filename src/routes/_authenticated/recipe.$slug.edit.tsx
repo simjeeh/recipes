@@ -398,3 +398,30 @@ function RemoveButton({ label, onClick }: { label: string; onClick: () => void }
     </button>
   );
 }
+
+function SecretToggle({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      aria-pressed={active}
+      title={active ? "Secret — hidden from public" : "Public"}
+      onClick={onClick}
+      className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border transition-colors ${
+        active
+          ? "border-primary bg-primary/15 text-primary"
+          : "border-border text-muted-foreground hover:text-foreground"
+      }`}
+    >
+      <Lock className="h-4 w-4" aria-hidden="true" />
+    </button>
+  );
+}
