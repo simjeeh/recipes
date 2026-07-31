@@ -42,6 +42,11 @@ export function IngredientsList({ ingredients }: { ingredients: Ingredient[] }) 
                 }
               >
                 {formatIngredient(ingredient)}
+                {ingredient.optional ? (
+                  <span className="ml-1.5 text-xs font-medium text-primary sm:text-sm">
+                    (optional)
+                  </span>
+                ) : null}
               </span>
               {ingredient.link ? (
                 <Link

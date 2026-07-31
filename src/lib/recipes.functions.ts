@@ -161,6 +161,7 @@ const ingredientSchema = z.object({
   unit: z.string().max(40).default(""),
   name: z.string().min(1).max(160),
   secret: z.boolean().optional(),
+  optional: z.boolean().optional(),
   link: linkSchema,
 });
 
