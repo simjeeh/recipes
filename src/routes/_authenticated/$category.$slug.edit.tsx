@@ -5,7 +5,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { CircleDashed, Eye, EyeOff, Loader2, Lock, Plus, Trash2 } from "lucide-react";
 
 import type { Ingredient, ProcessStep, RecipeLink } from "@/lib/recipes";
-import { categorySlug } from "@/lib/recipes";
+import type { ProcessRow } from "@/lib/recipes";
+import { categorySlug, rowsToSteps, toProcessRows } from "@/lib/recipes";
 import {
   getRecipeForAdmin,
   listAllRecipes,
@@ -38,47 +39,6 @@ function newStep(): ProcessStep {
   return { id: `step-${Date.now()}-${stepCounter}`, label: "", parents: [] };
 }
 
-function toGroups(process: ProcessStep[]): ProcessStep[][] {
-  const byId = new Map(process.map((step) => [step.id, step]));
-  const depths = new Map<string, number>();
-  const depthOf = (step: ProcessStep, seen: Set<string>): number => {
-    if (depths.has(step.id)) return depths.get(step.id)!;
-    if (seen.has(step.id)) return 0;
-    seen.add(step.id);
-    const parents = (step.parents ?? []).map((id) => byId.get(id)).filter(Boolean) as ProcessStep[];
-    const depth = parents.length === 0 ? 0 : Math.max(...parents.map((p) => depthOf(p, seen))) + 1;
-    depths.set(step.id, depth);
-    return depth;
-  };
-  const groups: ProcessStep[][] = [];
-  for (const step of process) {
-    const depth = depthOf(step, new Set());
-    (groups[depth] ??= []).push(step);
-  }
-  return groups.filter(Boolean);
-}
-
-function fromGroups(groups: ProcessStep[][]): ProcessStep[] {
-  const result: ProcessStep[] = [];
-  groups.forEach((group, index) => {
-    const parents = index === 0 ? [] : groups[index - 1].map((step) => step.id);
-    for (const step of group) result.push({ ...step, parents });
-  });
-  return result;
-}
-
-function updateStep(
-  setGroups: React.Dispatch<React.SetStateAction<ProcessStep[][]>>,
-  gIndex: number,
-  sIndex: number,
-  patch: Partial<ProcessStep>,
-) {
-  setGroups((prev) =>
-    prev.map((group, i) =>
-      i === gIndex ? group.map((step, j) => (j === sIndex ? { ...step, ...patch } : step)) : group,
-    ),
-  );
-}
 
 function EditRecipePage() {
   const { category, slug } = Route.useParams();
