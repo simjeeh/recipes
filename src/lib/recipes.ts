@@ -1,9 +1,17 @@
+/** Optional pointer from an ingredient or step to another recipe on the site. */
+export type RecipeLink = {
+  slug: string;
+  category: string;
+};
+
 export type Ingredient = {
   amount: string;
   unit: string;
   name: string;
   /** Secret ingredients are stripped from public reads and only shown to admins. */
   secret?: boolean;
+  /** Links this ingredient to another recipe. */
+  link?: RecipeLink;
 };
 
 export type ProcessStep = {
@@ -14,6 +22,8 @@ export type ProcessStep = {
   branch_label?: string;
   /** Secret steps are stripped from public reads and only shown to admins. */
   secret?: boolean;
+  /** Links this step to another recipe. */
+  link?: RecipeLink;
 };
 
 export type Recipe = {
