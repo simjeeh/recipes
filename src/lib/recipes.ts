@@ -273,3 +273,112 @@ export function recipeDescription(recipe: Recipe): string {
     .join(", ");
   return `${recipe.title} — ${recipe.ingredients.length} ingredients, ${recipe.process.length} steps. ${first}${recipe.ingredients.length > 4 ? ", and more." : "."}`;
 }
+
+/* ---------------------------------------------------------------------------
+ * Scalable recipes
+ *
+ * Amounts and step text may contain `{expression}` placeholders that scale with
+ * a serving count, e.g. `{n*5}-{n*10}` or `{half(3*n/4)}`. `n` is the serving
+ * count and `half(x)` rounds up to the nearest half.
+ * ------------------------------------------------------------------------- */
+
+const PLACEHOLDER = /\{([^{}]+)\}/g;
+
+function evalExpression(expression: string, n: number): number {
+  let i = 0;
+  const src = expression.replace(/\s+/g, "");
+
+  const parseExpr = (): number => {
+    let value = parseTerm();
+    while (src[i] === "+" || src[i] === "-") {
+      const op = src[i++];
+      const right = parseTerm();
+      value = op === "+" ? value + right : value - right;
+    }
+    return value;
+  };
+
+  const parseTerm = (): number => {
+    let value = parseFactor();
+    while (src[i] === "*" || src[i] === "/") {
+      const op = src[i++];
+      const right = parseFactor();
+      value = op === "*" ? value * right : value / right;
+    }
+    return value;
+  };
+
+  const parseFactor = (): number => {
+    if (src[i] === "-") {
+      i += 1;
+      return -parseFactor();
+    }
+    if (src[i] === "(") {
+      i += 1;
+      const value = parseExpr();
+      if (src[i] === ")") i += 1;
+      return value;
+    }
+    const fn = /^(half|ceil|floor|round)\(/.exec(src.slice(i));
+    if (fn) {
+      i += fn[0].length;
+      const value = parseExpr();
+      if (src[i] === ")") i += 1;
+      if (fn[1] === "half") return Math.ceil(value / 0.5) * 0.5;
+      if (fn[1] === "ceil") return Math.ceil(value);
+      if (fn[1] === "floor") return Math.floor(value);
+      return Math.round(value);
+    }
+    if (src[i] === "n") {
+      i += 1;
+      return n;
+    }
+    const num = /^\d+(\.\d+)?/.exec(src.slice(i));
+    if (num) {
+      i += num[0].length;
+      return Number(num[0]);
+    }
+    i += 1;
+    return 0;
+  };
+
+  const result = parseExpr();
+  return Number.isFinite(result) ? result : 0;
+}
+
+function formatNumber(value: number): string {
+  return String(Math.round(value * 100) / 100);
+}
+
+/** Replaces every `{expression}` in a string with its value for `n` servings. */
+export function scaleText(text: string, n: number): string {
+  return text.replace(PLACEHOLDER, (_match, expression: string) =>
+    formatNumber(evalExpression(expression, n)),
+  );
+}
+
+/** True when the recipe has any scalable placeholder. */
+export function isScalable(recipe: Recipe): boolean {
+  const hasToken = (value?: string) => Boolean(value && value.includes("{"));
+  return (
+    recipe.ingredients.some((i) => hasToken(i.amount) || hasToken(i.name)) ||
+    recipe.process.some((s) => hasToken(s.label) || hasToken(s.detail))
+  );
+}
+
+/** Returns the recipe with all placeholders resolved for `n` servings. */
+export function scaleRecipe(recipe: Recipe, n: number): Recipe {
+  return {
+    ...recipe,
+    ingredients: recipe.ingredients.map((ingredient) => ({
+      ...ingredient,
+      amount: scaleText(ingredient.amount ?? "", n),
+      name: scaleText(ingredient.name ?? "", n),
+    })),
+    process: recipe.process.map((step) => ({
+      ...step,
+      label: scaleText(step.label, n),
+      detail: step.detail ? scaleText(step.detail, n) : step.detail,
+    })),
+  };
+}
