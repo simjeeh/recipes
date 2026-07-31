@@ -1,13 +1,19 @@
+import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowUpRight, EyeOff, Pencil } from "lucide-react";
 
 import { IngredientsList } from "@/components/IngredientsList";
 import { ProcessSteps } from "@/components/flow/ProcessSteps";
 import { useAdminSession } from "@/hooks/useAdminSession";
-import { categorySlug, type Recipe } from "@/lib/recipes";
+import { categorySlug, isScalable, scaleRecipe, type Recipe } from "@/lib/recipes";
 
-export function RecipeDetail({ recipe }: { recipe: Recipe }) {
+export function RecipeDetail({ recipe: source }: { recipe: Recipe }) {
   const { isAdmin } = useAdminSession();
+  const scalable = isScalable(source);
+  const [cups, setCups] = useState("2");
+  const parsed = Number(cups);
+  const servings = Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+  const recipe = scalable ? scaleRecipe(source, servings) : source;
   const components = recipe.ingredients.filter((ingredient) => ingredient.link);
   const ingredients = recipe.ingredients.filter((ingredient) => !ingredient.link);
 
@@ -83,6 +89,26 @@ export function RecipeDetail({ recipe }: { recipe: Recipe }) {
           Ingredients
         </h2>
         <div className="mt-5 rounded-xl border border-border bg-card p-3 sm:p-5">
+          {scalable ? (
+            <div className="mb-3 flex items-center gap-3 rounded-lg border border-border bg-background/60 px-3 py-2.5">
+              <label htmlFor="cups" className="text-sm font-medium text-foreground">
+                Cups
+              </label>
+              <input
+                id="cups"
+                type="number"
+                min={0.5}
+                step={0.5}
+                inputMode="decimal"
+                value={cups}
+                onChange={(event) => setCups(event.target.value)}
+                className="w-24 rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground outline-none transition-colors focus:border-primary/60"
+              />
+              <span className="text-xs text-muted-foreground">
+                Amounts update as you type
+              </span>
+            </div>
+          ) : null}
           <IngredientsList ingredients={ingredients} />
         </div>
       </section>
