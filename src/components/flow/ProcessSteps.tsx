@@ -173,18 +173,8 @@ function OptionsCard({ options }: { options: { head: ProcessStep; rest: ProcessS
       </div>
 
       <ol className="mt-4 space-y-3">
-        {steps.map((step, index) => (
-          <li key={step.id} className="relative pl-5">
-            <span
-              aria-hidden="true"
-              className="absolute left-[3px] top-2 h-1.5 w-1.5 rounded-full bg-primary/70"
-            />
-            {index < steps.length - 1 ? (
-              <span
-                aria-hidden="true"
-                className="absolute left-[6px] top-4 bottom-[-0.75rem] w-px bg-gradient-to-b from-primary/40 to-primary/10"
-              />
-            ) : null}
+        {steps.map((step) => (
+          <li key={step.id}>
             <p className="text-[0.95rem] font-semibold leading-snug tracking-[-0.01em] text-foreground">
               {step.label}
             </p>
