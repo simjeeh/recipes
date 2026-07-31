@@ -2,6 +2,8 @@ export type Ingredient = {
   amount: string;
   unit: string;
   name: string;
+  /** Secret ingredients are stripped from public reads and only shown to admins. */
+  secret?: boolean;
 };
 
 export type ProcessStep = {
@@ -10,6 +12,8 @@ export type ProcessStep = {
   detail?: string;
   parents: string[];
   branch_label?: string;
+  /** Secret steps are stripped from public reads and only shown to admins. */
+  secret?: boolean;
 };
 
 export type Recipe = {
@@ -34,6 +38,7 @@ export const RECIPE_CATEGORIES = [
   "Breakfast",
   "Sides",
   "Snacks",
+  "Desserts",
   "Drinks",
   "Sauces",
 ] as const;

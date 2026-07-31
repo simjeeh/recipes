@@ -45,6 +45,20 @@ type Row = {
   updated_at: string;
 };
 
+/** Removes secret ingredients/steps (and dangling parent links) for public reads. */
+function stripSecrets(recipe: Recipe): Recipe {
+  const steps = recipe.process.filter((step) => !step.secret);
+  const ids = new Set(steps.map((s) => s.id));
+  return {
+    ...recipe,
+    ingredients: recipe.ingredients.filter((i) => !i.secret),
+    process: steps.map((step) => ({
+      ...step,
+      parents: (step.parents ?? []).filter((p) => ids.has(p)),
+    })),
+  };
+}
+
 function toRecipe(row: Row): Recipe {
   return {
     id: row.id,
@@ -92,7 +106,7 @@ export const getVisibleRecipe = createServerFn({ method: "GET" })
       .eq("slug", data.slug)
       .maybeSingle();
     if (error) throw new Error(error.message);
-    return row ? toRecipe(row as Row) : null;
+    return row ? stripSecrets(toRecipe(row as Row)) : null;
   });
 
 async function assertAdmin(context: { supabase: ReturnType<typeof publicClient>; userId: string; claims: Record<string, unknown> }) {
@@ -139,6 +153,7 @@ const ingredientSchema = z.object({
   amount: z.string().max(40).default(""),
   unit: z.string().max(40).default(""),
   name: z.string().min(1).max(160),
+  secret: z.boolean().optional(),
 });
 
 const stepSchema = z.object({
@@ -147,6 +162,7 @@ const stepSchema = z.object({
   detail: z.string().max(1000).optional(),
   parents: z.array(z.string().min(1).max(60)).default([]),
   branch_label: z.string().max(80).optional(),
+  secret: z.boolean().optional(),
 });
 
 const updateSchema = z.object({
