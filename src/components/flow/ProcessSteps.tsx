@@ -1,6 +1,4 @@
 import { Fragment } from "react";
-import { Link } from "@tanstack/react-router";
-import { ArrowUpRight } from "lucide-react";
 
 import { layoutSteps, type ProcessStep } from "@/lib/recipes";
 
