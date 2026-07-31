@@ -174,10 +174,18 @@ function EdgeArrow({
 }
 
 /** Small caption above a parallel lane, e.g. "Pot 1". */
-export function LaneLabel({ children }: { children: ReactNode }) {
+export function LaneLabel({
+  children,
+  arrow,
+}: {
+  children: ReactNode;
+  arrow?: "left" | "right";
+}) {
+  const Icon = arrow === "left" ? ChevronLeft : ChevronRight;
   return (
-    <p className="mb-2 text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-primary/80">
+    <p className="mb-2 flex items-center justify-center gap-1 text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-primary/80">
       {children}
+      {arrow ? <Icon className="h-3 w-3" aria-hidden="true" /> : null}
     </p>
   );
 }
