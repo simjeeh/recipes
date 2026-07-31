@@ -285,141 +285,166 @@ function EditRecipePage() {
         <section>
           <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-primary">Process steps</h2>
           <p className="mt-2 text-xs text-muted-foreground">
-            Steps flow top to bottom. Use the + under a step to add the next one, and add cards inside a
-            row for steps that branch. A row with several cards is either "at the same time" (done
-            together) or "pick one" (options shown as a single card with buttons).
+            Steps flow top to bottom. A row can hold several steps done at the same time, or be
+            switched to "Pick one" — then each option becomes its own column and can hold as many
+            steps as it needs, in order.
           </p>
 
-          {groups.length === 0 ? (
+          {rows.length === 0 ? (
             <div className="mt-4">
-              <AddButton label="Add first step" onClick={() => setGroups([[newStep()]])} />
+              <AddButton
+                label="Add first step"
+                onClick={() => setRows([{ kind: "steps", steps: [newStep()] }])}
+              />
             </div>
           ) : null}
 
-          <div className="mt-4 space-y-2">
-            {groups.map((group, gIndex) => (
-              <div key={gIndex}>
-                {group.length > 1 ? (
-                  <div className="mb-2 inline-flex items-center gap-1 rounded-full border border-border bg-card p-1 text-[11px]">
-                    {[
-                      { value: false, label: "At the same time" },
-                      { value: true, label: "Pick one" },
-                    ].map((mode) => {
-                      const active = Boolean(group[0]?.alternative) === mode.value;
-                      return (
-                        <button
-                          key={String(mode.value)}
-                          type="button"
-                          onClick={() =>
-                            setGroups((prev) =>
-                              prev.map((g, i) =>
-                                i === gIndex
-                                  ? g.map((step) => ({ ...step, alternative: mode.value }))
-                                  : g,
-                              ),
-                            )
-                          }
-                          className={`rounded-full px-3 py-1 font-semibold transition-colors ${
-                            active
-                              ? "bg-primary/15 text-primary"
-                              : "text-muted-foreground hover:text-foreground"
-                          }`}
-                        >
-                          {mode.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                ) : null}
-                <div
-                  className={
-                    group.length > 1
-                      ? "grid gap-3 sm:grid-cols-2"
-                      : "grid gap-3"
-                  }
-                >
-                  {group.map((step, sIndex) => (
-                    <div key={step.id} className="rounded-lg border border-border bg-card p-4">
-                      <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2">
-                        <input
-                          aria-label="Step label"
-                          placeholder="Blend the base"
-                          required
-                          value={step.label}
-                          onChange={(e) =>
-                            updateStep(setGroups, gIndex, sIndex, { label: e.target.value })
-                          }
-                          className={inputClass}
-                        />
-                        <SecretToggle
-                          label="Mark step secret"
-                          active={Boolean(step.secret)}
-                          onClick={() =>
-                            updateStep(setGroups, gIndex, sIndex, { secret: !step.secret })
-                          }
-                        />
-                        <RemoveButton
-                          label="Remove step"
-                          onClick={() =>
-                            setGroups((prev) =>
-                              prev
-                                .map((g, i) => (i === gIndex ? g.filter((_, j) => j !== sIndex) : g))
-                                .filter((g) => g.length > 0),
-                            )
-                          }
-                        />
-                      </div>
-                      <textarea
-                        aria-label="Step detail"
-                        placeholder="Optional detail"
-                        rows={2}
-                        value={step.detail ?? ""}
-                        onChange={(e) =>
-                          updateStep(setGroups, gIndex, sIndex, { detail: e.target.value })
-                        }
-                        className={`${inputClass} mt-3 resize-y`}
-                      />
-                      <input
-                        aria-label="Branch label"
-                        placeholder="Option name (optional)"
-                        value={step.branch_label ?? ""}
-                        onChange={(e) =>
-                          updateStep(setGroups, gIndex, sIndex, { branch_label: e.target.value })
-                        }
-                        className={`${inputClass} mt-3`}
-                      />
-                    </div>
-                  ))}
-                </div>
+          <div className="mt-4 space-y-3">
+            {rows.map((row, rIndex) => {
+              const patchRow = (next: ProcessRow) =>
+                setRows((prev) => prev.map((item, i) => (i === rIndex ? next : item)));
+              const dropRow = () => setRows((prev) => prev.filter((_, i) => i !== rIndex));
+              const isOptions = row.kind === "options";
 
-                <div className="flex items-center justify-center gap-2 py-2">
-                  <AddButton
-                    label="Add step beside"
-                    subtle
-                    onClick={() =>
-                      setGroups((prev) =>
-                        prev.map((g, i) =>
-                          i === gIndex
-                            ? [...g, { ...newStep(), alternative: Boolean(g[0]?.alternative) }]
-                            : g,
-                        ),
-                      )
-                    }
-                  />
-                  <AddButton
-                    label="Add step below"
-                    subtle
-                    onClick={() =>
-                      setGroups((prev) => [
-                        ...prev.slice(0, gIndex + 1),
-                        [newStep()],
-                        ...prev.slice(gIndex + 1),
-                      ])
-                    }
-                  />
+              return (
+                <div key={rIndex}>
+                  <div className="rounded-xl border border-border/70 bg-card/40 p-3 sm:p-4">
+                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                      <div className="inline-flex items-center gap-1 rounded-full border border-border bg-card p-1 text-[11px]">
+                        {[
+                          { value: false, label: "At the same time" },
+                          { value: true, label: "Pick one" },
+                        ].map((mode) => (
+                          <button
+                            key={String(mode.value)}
+                            type="button"
+                            onClick={() => patchRow(setRowMode(row, mode.value))}
+                            className={`rounded-full px-3 py-1 font-semibold transition-colors ${
+                              isOptions === mode.value
+                                ? "bg-primary/15 text-primary"
+                                : "text-muted-foreground hover:text-foreground"
+                            }`}
+                          >
+                            {mode.label}
+                          </button>
+                        ))}
+                      </div>
+                      <RemoveButton label="Remove row" onClick={dropRow} />
+                    </div>
+
+                    {row.kind === "steps" ? (
+                      <>
+                        <div className={row.steps.length > 1 ? "grid gap-3 sm:grid-cols-2" : "grid gap-3"}>
+                          {row.steps.map((step, sIndex) => (
+                            <StepEditor
+                              key={step.id}
+                              step={step}
+                              onChange={(patch) =>
+                                patchRow({
+                                  kind: "steps",
+                                  steps: row.steps.map((item, i) =>
+                                    i === sIndex ? { ...item, ...patch } : item,
+                                  ),
+                                })
+                              }
+                              onRemove={() => {
+                                const next = row.steps.filter((_, i) => i !== sIndex);
+                                if (!next.length) dropRow();
+                                else patchRow({ kind: "steps", steps: next });
+                              }}
+                            />
+                          ))}
+                        </div>
+                        <div className="mt-3 flex justify-center">
+                          <AddButton
+                            label="Add step at the same time"
+                            subtle
+                            onClick={() => patchRow({ kind: "steps", steps: [...row.steps, newStep()] })}
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          {row.branches.map((branch, bIndex) => {
+                            const patchBranch = (next: ProcessStep[]) => {
+                              const branches = row.branches
+                                .map((item, i) => (i === bIndex ? next : item))
+                                .filter((item) => item.length);
+                              if (!branches.length) dropRow();
+                              else patchRow({ kind: "options", branches });
+                            };
+                            return (
+                              <div
+                                key={branch[0]?.id ?? bIndex}
+                                className="rounded-lg border border-dashed border-primary/35 bg-primary/[0.03] p-3"
+                              >
+                                <div className="mb-2 flex items-center justify-between gap-2">
+                                  <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary">
+                                    {branch[0]?.branch_label?.trim() || `Option ${bIndex + 1}`}
+                                  </span>
+                                  <RemoveButton
+                                    label="Remove option"
+                                    onClick={() => patchBranch([])}
+                                  />
+                                </div>
+                                <div className="space-y-3">
+                                  {branch.map((step, sIndex) => (
+                                    <StepEditor
+                                      key={step.id}
+                                      step={step}
+                                      showBranchLabel={sIndex === 0}
+                                      onChange={(patch) =>
+                                        patchBranch(
+                                          branch.map((item, i) =>
+                                            i === sIndex ? { ...item, ...patch } : item,
+                                          ),
+                                        )
+                                      }
+                                      onRemove={() => patchBranch(branch.filter((_, i) => i !== sIndex))}
+                                    />
+                                  ))}
+                                </div>
+                                <div className="mt-3 flex justify-center">
+                                  <AddButton
+                                    label="Add step to this option"
+                                    subtle
+                                    onClick={() => patchBranch([...branch, newStep()])}
+                                  />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <div className="mt-3 flex justify-center">
+                          <AddButton
+                            label="Add option"
+                            subtle
+                            onClick={() =>
+                              patchRow({ kind: "options", branches: [...row.branches, [newStep()]] })
+                            }
+                          />
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-center py-2">
+                    <AddButton
+                      label="Add step below"
+                      subtle
+                      onClick={() =>
+                        setRows((prev) => [
+                          ...prev.slice(0, rIndex + 1),
+                          { kind: "steps", steps: [newStep()] },
+                          ...prev.slice(rIndex + 1),
+                        ])
+                      }
+                    />
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
 
