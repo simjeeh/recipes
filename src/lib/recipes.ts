@@ -267,10 +267,6 @@ export function collectRowSteps(rows: ProcessRow[]): ProcessStep[] {
 }
 
 export function recipeDescription(recipe: Recipe): string {
-  return describe(recipe);
-}
-
-function describe(recipe: Recipe): string {
   const first = recipe.ingredients
     .slice(0, 4)
     .map((i) => i.name)
