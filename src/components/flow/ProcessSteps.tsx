@@ -6,6 +6,16 @@ import {
   type ProcessRow,
   type ProcessStep,
 } from "@/lib/recipes";
+import {
+  LaneLabel,
+  LineConnector,
+  PillLane,
+  SplitConnector,
+  cardClass,
+  pillActiveClass,
+  pillClass,
+  pillIdleClass,
+} from "./flow-parts";
 
 /**
  * Step connector — diagram-style flow that works at every width. Rows stack
@@ -30,7 +40,7 @@ function RowList({ rows, nested = false }: { rows: ProcessRow[]; nested?: boolea
         <Fragment key={index}>
           {index > 0 ? (
             <li aria-hidden="true" className="w-full">
-              {row.kind === "steps" && row.steps.length > 1 ? <SplitConnector /> : <LineConnector />}
+              {splits(row) ? <SplitConnector /> : <LineConnector />}
             </li>
           ) : null}
           <li className="w-full">
@@ -42,11 +52,29 @@ function RowList({ rows, nested = false }: { rows: ProcessRow[]; nested?: boolea
   );
 }
 
+function splits(row: ProcessRow): boolean {
+  if (row.kind === "parallel") return row.lanes.length > 1;
+  return row.kind === "steps" && row.steps.length > 1;
+}
+
 function Row({ row, nested = false }: { row: ProcessRow; nested?: boolean }) {
   if (row.kind === "options") {
     return (
       <div className="mx-auto w-full max-w-xl">
         <OptionsLane branches={row.branches} />
+      </div>
+    );
+  }
+
+  if (row.kind === "parallel") {
+    return (
+      <div className="grid gap-4 md:grid-cols-2">
+        {row.lanes.map((lane, index) => (
+          <div key={index}>
+            {lane.label ? <LaneLabel>{lane.label}</LaneLabel> : null}
+            <RowList rows={lane.rows} nested />
+          </div>
+        ))}
       </div>
     );
   }
@@ -68,34 +96,6 @@ function Row({ row, nested = false }: { row: ProcessRow; nested?: boolean }) {
   );
 }
 
-function LineConnector() {
-  return (
-    <div className="flex justify-center py-1">
-      <span className="h-10 w-px bg-gradient-to-b from-primary/10 via-primary/50 to-primary/10" />
-    </div>
-  );
-}
-
-/** Vertical stem that splits into two lanes for simultaneous steps. */
-function SplitConnector() {
-  return (
-    <div className="flex flex-col items-center py-1">
-      <span className="h-6 w-px bg-gradient-to-b from-primary/10 to-primary/50" />
-      <div className="hidden w-1/2 md:block">
-        <div className="h-px w-full bg-gradient-to-r from-primary/20 via-primary/50 to-primary/20" />
-        <div className="flex justify-between">
-          <span className="h-6 w-px bg-gradient-to-b from-primary/50 to-primary/10" />
-          <span className="h-6 w-px bg-gradient-to-b from-primary/50 to-primary/10" />
-        </div>
-      </div>
-      <span className="h-6 w-px bg-gradient-to-b from-primary/50 to-primary/10 md:hidden" />
-    </div>
-  );
-}
-
-const cardClass =
-  "group relative h-full overflow-hidden rounded-2xl border p-5 backdrop-blur-sm transition-all duration-300 shadow-[0_1px_0_0_color-mix(in_oklab,var(--color-foreground)_6%,transparent)_inset,0_8px_24px_-16px_rgb(0_0_0_/_0.9)]";
-
 /**
  * Mutually exclusive paths: pill switcher on top, then the selected branch
  * rendered as its own chain of step cards so it reads like the rest of the flow.
@@ -107,7 +107,7 @@ function OptionsLane({ branches }: { branches: ProcessBranch[] }) {
 
   return (
     <div className="relative rounded-[1.4rem] border border-dashed border-primary/35 bg-primary/[0.03] p-4 sm:p-5">
-      <div className="flex flex-wrap justify-center gap-1.5">
+      <PillLane>
         {branches.map((item, i) => {
           const selected = i === index;
           return (
@@ -116,17 +116,13 @@ function OptionsLane({ branches }: { branches: ProcessBranch[] }) {
               type="button"
               onClick={() => setActive(i)}
               aria-pressed={selected}
-              className={`rounded-full border px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] transition-colors ${
-                selected
-                  ? "border-primary/60 bg-primary/15 text-primary"
-                  : "border-border/70 bg-transparent text-muted-foreground hover:border-primary/40 hover:text-foreground"
-              }`}
+              className={`${pillClass} ${selected ? pillActiveClass : pillIdleClass}`}
             >
               {branchTitle(item, i)}
             </button>
           );
         })}
-      </div>
+      </PillLane>
 
       <div className="mt-4">
         <RowList rows={branch.rows} nested />
