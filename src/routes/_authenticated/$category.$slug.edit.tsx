@@ -40,7 +40,7 @@ function EditRecipePage() {
 
   const [title, setTitle] = useState("");
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
-  const [steps, setSteps] = useState<ProcessStep[]>([]);
+  const [groups, setGroups] = useState<ProcessStep[][]>([]);
   const [hidden, setHidden] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -48,7 +48,7 @@ function EditRecipePage() {
     if (!recipe) return;
     setTitle(recipe.title);
     setIngredients(recipe.ingredients);
-    setSteps(recipe.process);
+    setGroups(toGroups(recipe.process));
     setHidden(recipe.is_hidden);
   }, [recipe]);
 
@@ -59,7 +59,7 @@ function EditRecipePage() {
           id: recipe!.id,
           title,
           ingredients,
-          process: steps.map((step) => ({ ...step, parents: step.parents ?? [] })),
+          process: fromGroups(groups),
         },
       }),
     onSuccess: async () => {
