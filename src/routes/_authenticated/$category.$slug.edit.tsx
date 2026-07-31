@@ -466,7 +466,7 @@ function LinkPicker({
       }}
       className={`rounded-md border border-border bg-input px-2 py-2 text-xs text-muted-foreground outline-none ${className}`}
     >
-      <option value="">No linked recipe</option>
+      <option value="">Select a recipe</option>
       {options.map((option) => (
         <option key={option.slug} value={option.slug}>
           {option.title}
