@@ -414,6 +414,42 @@ function EditRecipePage() {
 }
 
 function SectionHeading({ title, onAdd }: { title: string; onAdd: () => void }) {
+  return SectionHeadingImpl({ title, onAdd });
+}
+
+function LinkPicker({
+  options,
+  value,
+  onChange,
+  className = "",
+}: {
+  options: { slug: string; title: string; category: string }[];
+  value?: RecipeLink;
+  onChange: (link: RecipeLink | undefined) => void;
+  className?: string;
+}) {
+  return (
+    <select
+      aria-label="Link to another recipe"
+      value={value?.slug ?? ""}
+      onChange={(event) => {
+        const slug = event.target.value;
+        const match = options.find((option) => option.slug === slug);
+        onChange(match ? { slug: match.slug, category: categorySlug(match.category) } : undefined);
+      }}
+      className={`rounded-md border border-border bg-input px-2 py-2 text-xs text-muted-foreground outline-none ${className}`}
+    >
+      <option value="">No linked recipe</option>
+      {options.map((option) => (
+        <option key={option.slug} value={option.slug}>
+          {option.title}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+function SectionHeadingImpl({ title, onAdd }: { title: string; onAdd: () => void }) {
   return (
     <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
       <h2 className="min-w-0 text-xs font-bold uppercase tracking-[0.2em] text-primary">{title}</h2>
