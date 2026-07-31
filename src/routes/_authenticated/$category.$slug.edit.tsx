@@ -408,7 +408,7 @@ function EditRecipePage() {
                       />
                       <input
                         aria-label="Branch label"
-                        placeholder="Branch label (optional)"
+                        placeholder="Option name (optional)"
                         value={step.branch_label ?? ""}
                         onChange={(e) =>
                           updateStep(setGroups, gIndex, sIndex, { branch_label: e.target.value })
@@ -421,11 +421,15 @@ function EditRecipePage() {
 
                 <div className="flex items-center justify-center gap-2 py-2">
                   <AddButton
-                    label="Add parallel step"
+                    label="Add step beside"
                     subtle
                     onClick={() =>
                       setGroups((prev) =>
-                        prev.map((g, i) => (i === gIndex ? [...g, newStep()] : g)),
+                        prev.map((g, i) =>
+                          i === gIndex
+                            ? [...g, { ...newStep(), alternative: Boolean(g[0]?.alternative) }]
+                            : g,
+                        ),
                       )
                     }
                   />
