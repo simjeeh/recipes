@@ -352,9 +352,11 @@ function emitRows(
 
 /** All steps inside a row tree, in order. */
 export function collectRowSteps(rows: ProcessRow[]): ProcessStep[] {
-  return rows.flatMap((row) =>
-    row.kind === "steps" ? row.steps : row.branches.flatMap((branch) => collectRowSteps(branch.rows)),
-  );
+  return rows.flatMap((row) => {
+    if (row.kind === "steps") return row.steps;
+    const groups = row.kind === "parallel" ? row.lanes : row.branches;
+    return groups.flatMap((group) => collectRowSteps(group.rows));
+  });
 }
 
 export function recipeDescription(recipe: Recipe): string {
