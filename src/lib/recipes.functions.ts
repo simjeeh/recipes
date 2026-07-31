@@ -132,7 +132,7 @@ export const listAllRecipes = createServerFn({ method: "GET" })
       .select(RECIPE_COLUMNS)
       .order("created_at", { ascending: true });
     if (error) throw new Error(error.message);
-    return ((data ?? []) as Row[]).map(toSummary);
+    return ((data ?? []) as Row[]).map((row) => toSummary(row));
   });
 
 export const getRecipeForAdmin = createServerFn({ method: "POST" })
