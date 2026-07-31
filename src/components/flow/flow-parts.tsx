@@ -32,6 +32,7 @@ export function SplitConnector() {
 
 export const pillClass =
   "shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] transition-colors";
+  "shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] transition-colors";
 
 export const pillActiveClass = "border-primary/60 bg-primary/15 text-primary";
 export const pillIdleClass =
