@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check } from "lucide-react";
+import { Check, Lock } from "lucide-react";
 
 import { formatIngredient, type Ingredient } from "@/lib/recipes";
 
@@ -42,6 +42,12 @@ export function IngredientsList({ ingredients }: { ingredients: Ingredient[] }) 
               >
                 {formatIngredient(ingredient)}
               </span>
+              {ingredient.secret ? (
+                <span className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+                  <Lock className="h-3 w-3" aria-hidden="true" />
+                  Secret
+                </span>
+              ) : null}
             </label>
           </li>
         );

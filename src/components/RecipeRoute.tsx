@@ -19,10 +19,10 @@ export function RecipeRoute({
   const { data: adminRecipe } = useQuery({
     queryKey: ["admin-recipe", slug],
     queryFn: () => fetchAdminRecipe({ data: { slug } }),
-    enabled: isAdmin && !publicRecipe,
+    enabled: isAdmin,
   });
 
-  const recipe = publicRecipe ?? adminRecipe ?? null;
+  const recipe = adminRecipe ?? publicRecipe ?? null;
 
   if (!recipe) {
     if (loading || (isAdmin && !publicRecipe)) {

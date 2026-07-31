@@ -73,8 +73,8 @@ function toRecipe(row: Row): Recipe {
   };
 }
 
-function toSummary(row: Row): RecipeSummary {
-  const recipe = toRecipe(row);
+function toSummary(row: Row, isPublic = false): RecipeSummary {
+  const recipe = isPublic ? stripSecrets(toRecipe(row)) : toRecipe(row);
   return {
     id: recipe.id,
     title: recipe.title,
@@ -94,7 +94,7 @@ export const listVisibleRecipes = createServerFn({ method: "GET" }).handler(asyn
     .select(RECIPE_COLUMNS)
     .order("created_at", { ascending: true });
   if (error) throw new Error(error.message);
-  return ((data ?? []) as Row[]).map(toSummary);
+  return ((data ?? []) as Row[]).map((row) => toSummary(row, true));
 });
 
 export const getVisibleRecipe = createServerFn({ method: "GET" })
