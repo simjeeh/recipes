@@ -26,7 +26,7 @@ const inputClass =
   "w-full rounded-md border border-border bg-input px-3 py-2 text-sm text-foreground outline-none";
 
 function EditRecipePage() {
-  const { slug } = Route.useParams();
+  const { category, slug } = Route.useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const fetchRecipe = useServerFn(getRecipeForAdmin);
@@ -98,8 +98,8 @@ function EditRecipePage() {
   return (
     <div className="mx-auto max-w-3xl px-5 py-12 sm:px-8 sm:py-16">
       <Link
-        to="/recipe/$slug"
-        params={{ slug }}
+        to="/$category/$slug"
+        params={{ category, slug }}
         className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
       >
         ← Back to recipe
@@ -358,7 +358,7 @@ function EditRecipePage() {
           </button>
           <button
             type="button"
-            onClick={() => navigate({ to: "/recipe/$slug", params: { slug } })}
+            onClick={() => navigate({ to: "/$category/$slug", params: { category, slug } })}
             className="rounded-md border border-border px-4 py-2.5 text-sm font-medium transition-colors hover:bg-white/5"
           >
             Done
