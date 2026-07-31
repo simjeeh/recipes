@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SiteHeader } from "../components/SiteHeader";
+import { RecipeSearchProvider } from "../hooks/useRecipeSearch";
 import { supabase } from "../integrations/supabase/client";
 
 function NotFoundComponent() {
@@ -135,18 +136,28 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="flex min-h-screen flex-col bg-background">
-        <SiteHeader />
-        <main className="flex-1">
-          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-          <Outlet />
-        </main>
-        <footer className="border-t border-border">
-          <div className="mx-auto max-w-5xl px-5 py-8 text-sm text-muted-foreground sm:px-8">
-            Recipes — a companion to huzaifah.me
-          </div>
-        </footer>
-      </div>
+      <RecipeSearchProvider>
+        <div className="flex min-h-screen flex-col bg-background">
+          <SiteHeader />
+          <main className="flex-1">
+            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+            <Outlet />
+          </main>
+          <footer className="border-t border-border">
+            <div className="px-4 py-8 text-sm text-muted-foreground sm:px-6">
+              Recipes by{" "}
+              <a
+                href="https://huzaifah.me"
+                target="_blank"
+                rel="noreferrer"
+                className="font-medium text-primary transition-colors hover:underline"
+              >
+                Huzaifah
+              </a>
+            </div>
+          </footer>
+        </div>
+      </RecipeSearchProvider>
     </QueryClientProvider>
   );
 }
