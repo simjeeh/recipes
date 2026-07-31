@@ -75,11 +75,15 @@ function Row({ row, nested = false }: { row: ProcessRow; nested?: boolean }) {
 
   if (row.kind === "parallel") {
     return (
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid items-stretch gap-4 md:grid-cols-2">
         {row.lanes.map((lane, index) => (
-          <div key={index}>
+          <div key={index} className="flex h-full flex-col">
             {lane.label ? <LaneLabel>{lane.label}</LaneLabel> : null}
             <RowList rows={lane.rows} nested />
+            <span
+              aria-hidden="true"
+              className="mx-auto hidden w-px flex-1 bg-primary/40 md:block"
+            />
           </div>
         ))}
       </div>
