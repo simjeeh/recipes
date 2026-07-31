@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Eye, EyeOff, Loader2, Plus, Trash2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, Lock, Plus, Trash2 } from "lucide-react";
 
 import type { Ingredient, ProcessStep } from "@/lib/recipes";
 import { getRecipeForAdmin, setRecipeHidden, updateRecipe } from "@/lib/recipes.functions";
@@ -153,7 +153,7 @@ function EditRecipePage() {
           />
           <ul className="mt-4 space-y-3">
             {ingredients.map((ingredient, index) => (
-              <li key={index} className="grid grid-cols-[4rem_5rem_minmax(0,1fr)_auto] gap-2">
+              <li key={index} className="grid grid-cols-[4rem_5rem_minmax(0,1fr)_auto_auto] gap-2">
                 <input
                   aria-label="Amount"
                   placeholder="1"
@@ -188,6 +188,15 @@ function EditRecipePage() {
                   }
                   className={inputClass}
                 />
+                <SecretToggle
+                  label="Mark ingredient secret"
+                  active={Boolean(ingredient.secret)}
+                  onClick={() =>
+                    setIngredients((prev) =>
+                      prev.map((item, i) => (i === index ? { ...item, secret: !item.secret } : item)),
+                    )
+                  }
+                />
                 <RemoveButton
                   label="Remove ingredient"
                   onClick={() => setIngredients((prev) => prev.filter((_, i) => i !== index))}
@@ -214,7 +223,7 @@ function EditRecipePage() {
           <ul className="mt-4 space-y-4">
             {steps.map((step, index) => (
               <li key={step.id} className="rounded-lg border border-border bg-card p-4">
-                <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+                <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3">
                   <input
                     aria-label="Step label"
                     placeholder="Blend the base"
@@ -226,6 +235,15 @@ function EditRecipePage() {
                       )
                     }
                     className={inputClass}
+                  />
+                  <SecretToggle
+                    label="Mark step secret"
+                    active={Boolean(step.secret)}
+                    onClick={() =>
+                      setSteps((prev) =>
+                        prev.map((item, i) => (i === index ? { ...item, secret: !item.secret } : item)),
+                      )
+                    }
                   />
                   <RemoveButton
                     label="Remove step"
@@ -377,6 +395,33 @@ function RemoveButton({ label, onClick }: { label: string; onClick: () => void }
       className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:border-destructive hover:text-destructive"
     >
       <Trash2 className="h-4 w-4" aria-hidden="true" />
+    </button>
+  );
+}
+
+function SecretToggle({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      aria-pressed={active}
+      title={active ? "Secret — hidden from public" : "Public"}
+      onClick={onClick}
+      className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border transition-colors ${
+        active
+          ? "border-primary bg-primary/15 text-primary"
+          : "border-border text-muted-foreground hover:text-foreground"
+      }`}
+    >
+      <Lock className="h-4 w-4" aria-hidden="true" />
     </button>
   );
 }
