@@ -131,6 +131,113 @@ export function stepEdges(steps: ProcessStep[]): { from: string; to: string; lab
   );
 }
 
+/**
+ * A row in the process flow. `steps` holds one step (plain) or several done at
+ * the same time; `options` holds mutually exclusive branches, each an ordered
+ * chain of steps.
+ */
+export type ProcessRow =
+  | { kind: "steps"; steps: ProcessStep[] }
+  | { kind: "options"; branches: ProcessStep[][] };
+
+/** Steps reachable from `rootId` and from no other branch root. */
+function exclusiveChain(steps: ProcessStep[], rootId: string, otherRoots: string[]): ProcessStep[] {
+  const ancestors = new Map<string, Set<string>>();
+  const resolve = (id: string, seen: Set<string>): Set<string> => {
+    if (ancestors.has(id)) return ancestors.get(id)!;
+    if (seen.has(id)) return new Set();
+    seen.add(id);
+    const step = steps.find((s) => s.id === id);
+    const set = new Set<string>();
+    for (const parent of step?.parents ?? []) {
+      set.add(parent);
+      for (const grand of resolve(parent, seen)) set.add(grand);
+    }
+    ancestors.set(id, set);
+    return set;
+  };
+
+  return steps.filter((step) => {
+    const set = resolve(step.id, new Set());
+    return set.has(rootId) && !otherRoots.some((other) => set.has(other));
+  });
+}
+
+/** Turns a flat step graph into ordered rows for rendering and editing. */
+export function toProcessRows(steps: ProcessStep[]): ProcessRow[] {
+  const levels = layoutSteps(steps);
+  const order = new Map(steps.map((step, index) => [step.id, index]));
+  const consumed = new Set<string>();
+  const rows: ProcessRow[] = [];
+
+  levels.forEach((level, levelIndex) => {
+    const remaining = level.filter((step) => !consumed.has(step.id));
+    if (!remaining.length) return;
+
+    if (remaining.length > 1 && remaining.every((step) => step.alternative)) {
+      const roots = remaining.map((step) => step.id);
+      const branches = remaining.map((head) => {
+        const rest = exclusiveChain(
+          steps,
+          head.id,
+          roots.filter((id) => id !== head.id),
+        )
+          .filter((step) => !consumed.has(step.id))
+          .sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+        rest.forEach((step) => consumed.add(step.id));
+        return [head, ...rest];
+      });
+      remaining.forEach((step) => consumed.add(step.id));
+      rows.push({ kind: "options", branches });
+      return;
+    }
+
+    remaining.forEach((step) => consumed.add(step.id));
+    rows.push({ kind: "steps", steps: remaining });
+    void levelIndex;
+  });
+
+  return rows;
+}
+
+/** Inverse of `toProcessRows` — rebuilds parent links from row structure. */
+export function rowsToSteps(rows: ProcessRow[]): ProcessStep[] {
+  const result: ProcessStep[] = [];
+  let tails: string[] = [];
+
+  for (const row of rows) {
+    if (row.kind === "steps") {
+      const steps = row.steps.filter((step) => step.label.trim() || step.detail?.trim());
+      if (!steps.length) continue;
+      for (const step of steps) {
+        result.push({ ...step, parents: tails, alternative: false });
+      }
+      tails = steps.map((step) => step.id);
+      continue;
+    }
+
+    const branches = row.branches
+      .map((branch) => branch.filter((step) => step.label.trim() || step.detail?.trim()))
+      .filter((branch) => branch.length);
+    if (!branches.length) continue;
+
+    const nextTails: string[] = [];
+    for (const branch of branches) {
+      branch.forEach((step, index) => {
+        result.push({
+          ...step,
+          parents: index === 0 ? tails : [branch[index - 1].id],
+          alternative: index === 0,
+        });
+      });
+      nextTails.push(branch[branch.length - 1].id);
+    }
+    tails = nextTails;
+  }
+
+  return result;
+}
+
 export function recipeDescription(recipe: Recipe): string {
   const first = recipe.ingredients
     .slice(0, 4)
