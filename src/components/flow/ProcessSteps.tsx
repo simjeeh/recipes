@@ -103,7 +103,7 @@ function Row({ row, nested = false }: { row: ProcessRow; nested?: boolean }) {
                   ? ("left" as const)
                   : undefined;
             return (
-              <div key={index} className="w-[82vw] shrink-0 snap-center">
+              <div key={index} className="w-[76vw] shrink-0 snap-center px-1">
                 <Lane lane={lane} arrow={arrow} />
               </div>
             );
