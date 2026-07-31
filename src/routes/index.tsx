@@ -31,7 +31,7 @@ function Index() {
   const publicRecipes = Route.useLoaderData();
   const { isAdmin } = useAdminSession();
   const fetchAll = useServerFn(listAllRecipes);
-  const { query } = useRecipeSearch();
+  const { query, category } = useRecipeSearch();
 
   const { data: allRecipes } = useQuery({
     queryKey: ["all-recipes"],
@@ -42,17 +42,23 @@ function Index() {
   const all: RecipeSummary[] = (isAdmin && allRecipes) || publicRecipes;
   const recipes = all.filter((recipe) => fuzzyMatch(query, recipe.title));
 
-  const sections = RECIPE_CATEGORIES.map((category) => ({
-    category,
-    items: recipes.filter((recipe) => recipe.category === category),
-  })).filter((section) => section.items.length > 0);
+  const sections = RECIPE_CATEGORIES.filter(
+    (section) => category === "All" || category === section,
+  )
+    .map((section) => ({
+      category: section,
+      items: recipes.filter((recipe) => recipe.category === section),
+    }))
+    .filter((section) => section.items.length > 0);
 
   return (
     <div className="mx-auto max-w-5xl px-5 py-12 sm:px-8 sm:py-16">
       <h1 className="sr-only">Recipes</h1>
       {sections.length === 0 ? (
         <p className="text-muted-foreground">
-          {query ? "No recipes match your search." : "No recipes published yet."}
+          {query || category !== "All"
+            ? "No recipes match your search."
+            : "No recipes published yet."}
         </p>
       ) : (
         <div className="space-y-12">

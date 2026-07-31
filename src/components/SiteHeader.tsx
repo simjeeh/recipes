@@ -5,12 +5,13 @@ import { LogOut, Salad, Search, UserRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminSession } from "@/hooks/useAdminSession";
 import { useRecipeSearch } from "@/hooks/useRecipeSearch";
+import { RECIPE_CATEGORIES } from "@/lib/recipes";
 
 export function SiteHeader() {
   const { isAdmin, email } = useAdminSession();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { query, setQuery } = useRecipeSearch();
+  const { query, setQuery, category, setCategory } = useRecipeSearch();
 
   async function signOut() {
     await queryClient.cancelQueries();
@@ -30,8 +31,8 @@ export function SiteHeader() {
           <span className="truncate">Recipes</span>
         </Link>
 
-        <div className="order-last col-span-2 min-w-0 sm:order-none sm:col-span-1">
-          <label className="relative block">
+        <div className="order-last col-span-2 flex min-w-0 items-center gap-2 sm:order-none sm:col-span-1">
+          <label className="relative block min-w-0 flex-1">
             <span className="sr-only">Search recipes</span>
             <Search
               className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
@@ -44,6 +45,21 @@ export function SiteHeader() {
               placeholder="Search recipes"
               className="w-full rounded-md border border-border bg-card py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/60 focus:outline-none"
             />
+          </label>
+          <label className="shrink-0">
+            <span className="sr-only">Filter by section</span>
+            <select
+              value={category}
+              onChange={(event) => setCategory(event.target.value as typeof category)}
+              className="rounded-md border border-border bg-card px-2 py-2 text-sm text-foreground focus:border-primary/60 focus:outline-none"
+            >
+              <option value="All">All</option>
+              {RECIPE_CATEGORIES.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
           </label>
         </div>
 
