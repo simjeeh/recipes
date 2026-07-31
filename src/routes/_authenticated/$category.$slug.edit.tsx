@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Eye, EyeOff, Loader2, Lock, Plus, Trash2 } from "lucide-react";
+import { CircleDashed, Eye, EyeOff, Loader2, Lock, Plus, Trash2 } from "lucide-react";
 
 import type { Ingredient, ProcessStep, RecipeLink } from "@/lib/recipes";
 import { categorySlug } from "@/lib/recipes";
@@ -256,7 +256,7 @@ function EditRecipePage() {
           />
           <ul className="mt-4 space-y-3">
             {ingredients.map((ingredient, index) => (
-              <li key={index} className="grid grid-cols-[4rem_5rem_minmax(0,1fr)_auto_auto] items-center gap-2">
+              <li key={index} className="grid grid-cols-[4rem_5rem_minmax(0,1fr)_auto_auto_auto] items-center gap-2">
                 <input
                   aria-label="Amount"
                   placeholder="1"
@@ -297,6 +297,19 @@ function EditRecipePage() {
                   onClick={() =>
                     setIngredients((prev) =>
                       prev.map((item, i) => (i === index ? { ...item, secret: !item.secret } : item)),
+                    )
+                  }
+                />
+                <ToggleButton
+                  label="Mark ingredient optional"
+                  title={ingredient.optional ? "Optional ingredient" : "Required ingredient"}
+                  active={Boolean(ingredient.optional)}
+                  icon={<CircleDashed className="h-4 w-4" aria-hidden="true" />}
+                  onClick={() =>
+                    setIngredients((prev) =>
+                      prev.map((item, i) =>
+                        i === index ? { ...item, optional: !item.optional } : item,
+                      ),
                     )
                   }
                 />
@@ -582,11 +595,35 @@ function SecretToggle({
   onClick: () => void;
 }) {
   return (
+    <ToggleButton
+      label={label}
+      title={active ? "Secret — hidden from public" : "Public"}
+      active={active}
+      onClick={onClick}
+      icon={<Lock className="h-4 w-4" aria-hidden="true" />}
+    />
+  );
+}
+
+function ToggleButton({
+  label,
+  title,
+  active,
+  onClick,
+  icon,
+}: {
+  label: string;
+  title: string;
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+}) {
+  return (
     <button
       type="button"
       aria-label={label}
       aria-pressed={active}
-      title={active ? "Secret — hidden from public" : "Public"}
+      title={title}
       onClick={onClick}
       className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border transition-colors ${
         active
@@ -594,7 +631,7 @@ function SecretToggle({
           : "border-border text-muted-foreground hover:text-foreground"
       }`}
     >
-      <Lock className="h-4 w-4" aria-hidden="true" />
+      {icon}
     </button>
   );
 }

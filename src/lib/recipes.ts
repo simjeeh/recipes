@@ -10,6 +10,8 @@ export type Ingredient = {
   name: string;
   /** Secret ingredients are stripped from public reads and only shown to admins. */
   secret?: boolean;
+  /** Optional ingredients are shown with an "(optional)" marker. */
+  optional?: boolean;
   /** Links this ingredient to another recipe. */
   link?: RecipeLink;
 };
