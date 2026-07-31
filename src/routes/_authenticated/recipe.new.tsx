@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2 } from "lucide-react";
 
-import { RECIPE_CATEGORIES, type RecipeCategory } from "@/lib/recipes";
+import { RECIPE_CATEGORIES, categorySlug, type RecipeCategory } from "@/lib/recipes";
 import { createRecipe } from "@/lib/recipes.functions";
 
 export const Route = createFileRoute("/_authenticated/recipe/new")({
@@ -38,7 +38,10 @@ function NewRecipePage() {
     mutationFn: () => create({ data: { title: title.trim(), category } }),
     onSuccess: async ({ slug }) => {
       await queryClient.invalidateQueries();
-      navigate({ to: "/recipe/$slug/edit", params: { slug } });
+      navigate({
+        to: "/$category/$slug/edit",
+        params: { category: categorySlug(category), slug },
+      });
     },
     onError: (error: Error) => setMessage(error.message),
   });

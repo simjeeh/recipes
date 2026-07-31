@@ -45,6 +45,11 @@ export const RECIPE_CATEGORIES = [
 
 export type RecipeCategory = (typeof RECIPE_CATEGORIES)[number];
 
+/** URL segment for a category, e.g. "Desserts" -> "desserts". */
+export function categorySlug(category: string): string {
+  return category.toLowerCase().replace(/\s+/g, "-");
+}
+
 /** Lightweight fuzzy match: every query char appears in order in the target. */
 export function fuzzyMatch(query: string, target: string): boolean {
   const q = query.trim().toLowerCase();

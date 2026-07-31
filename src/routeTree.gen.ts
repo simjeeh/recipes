@@ -12,9 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as CategorySlugIndexRouteImport } from './routes/$category.$slug.index'
 import { Route as AuthenticatedRecipeNewRouteImport } from './routes/_authenticated/recipe.new'
-import { Route as RecipeSlugIndexRouteImport } from './routes/recipe.$slug.index'
-import { Route as AuthenticatedRecipeSlugEditRouteImport } from './routes/_authenticated/recipe.$slug.edit'
+import { Route as AuthenticatedCategorySlugEditRouteImport } from './routes/_authenticated/$category.$slug.edit'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -30,20 +30,20 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CategorySlugIndexRoute = CategorySlugIndexRouteImport.update({
+  id: '/$category/$slug/',
+  path: '/$category/$slug/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedRecipeNewRoute = AuthenticatedRecipeNewRouteImport.update({
   id: '/recipe/new',
   path: '/recipe/new',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const RecipeSlugIndexRoute = RecipeSlugIndexRouteImport.update({
-  id: '/recipe/$slug/',
-  path: '/recipe/$slug/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedRecipeSlugEditRoute =
-  AuthenticatedRecipeSlugEditRouteImport.update({
-    id: '/recipe/$slug/edit',
-    path: '/recipe/$slug/edit',
+const AuthenticatedCategorySlugEditRoute =
+  AuthenticatedCategorySlugEditRouteImport.update({
+    id: '/$category/$slug/edit',
+    path: '/$category/$slug/edit',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
@@ -51,15 +51,15 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/recipe/new': typeof AuthenticatedRecipeNewRoute
-  '/recipe/$slug/': typeof RecipeSlugIndexRoute
-  '/recipe/$slug/edit': typeof AuthenticatedRecipeSlugEditRoute
+  '/$category/$slug/': typeof CategorySlugIndexRoute
+  '/$category/$slug/edit': typeof AuthenticatedCategorySlugEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/recipe/new': typeof AuthenticatedRecipeNewRoute
-  '/recipe/$slug': typeof RecipeSlugIndexRoute
-  '/recipe/$slug/edit': typeof AuthenticatedRecipeSlugEditRoute
+  '/$category/$slug': typeof CategorySlugIndexRoute
+  '/$category/$slug/edit': typeof AuthenticatedCategorySlugEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -67,30 +67,35 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/recipe/new': typeof AuthenticatedRecipeNewRoute
-  '/recipe/$slug/': typeof RecipeSlugIndexRoute
-  '/_authenticated/recipe/$slug/edit': typeof AuthenticatedRecipeSlugEditRoute
+  '/$category/$slug/': typeof CategorySlugIndexRoute
+  '/_authenticated/$category/$slug/edit': typeof AuthenticatedCategorySlugEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/auth' | '/recipe/new' | '/recipe/$slug/' | '/recipe/$slug/edit'
+    | '/'
+    | '/auth'
+    | '/recipe/new'
+    | '/$category/$slug/'
+    | '/$category/$slug/edit'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/recipe/new' | '/recipe/$slug' | '/recipe/$slug/edit'
+  to:
+    '/' | '/auth' | '/recipe/new' | '/$category/$slug' | '/$category/$slug/edit'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/recipe/new'
-    | '/recipe/$slug/'
-    | '/_authenticated/recipe/$slug/edit'
+    | '/$category/$slug/'
+    | '/_authenticated/$category/$slug/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
-  RecipeSlugIndexRoute: typeof RecipeSlugIndexRoute
+  CategorySlugIndexRoute: typeof CategorySlugIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -116,6 +121,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/$category/$slug/': {
+      id: '/$category/$slug/'
+      path: '/$category/$slug'
+      fullPath: '/$category/$slug/'
+      preLoaderRoute: typeof CategorySlugIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/recipe/new': {
       id: '/_authenticated/recipe/new'
       path: '/recipe/new'
@@ -123,18 +135,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRecipeNewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/recipe/$slug/': {
-      id: '/recipe/$slug/'
-      path: '/recipe/$slug'
-      fullPath: '/recipe/$slug/'
-      preLoaderRoute: typeof RecipeSlugIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/recipe/$slug/edit': {
-      id: '/_authenticated/recipe/$slug/edit'
-      path: '/recipe/$slug/edit'
-      fullPath: '/recipe/$slug/edit'
-      preLoaderRoute: typeof AuthenticatedRecipeSlugEditRouteImport
+    '/_authenticated/$category/$slug/edit': {
+      id: '/_authenticated/$category/$slug/edit'
+      path: '/$category/$slug/edit'
+      fullPath: '/$category/$slug/edit'
+      preLoaderRoute: typeof AuthenticatedCategorySlugEditRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
   }
@@ -142,12 +147,12 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedRecipeNewRoute: typeof AuthenticatedRecipeNewRoute
-  AuthenticatedRecipeSlugEditRoute: typeof AuthenticatedRecipeSlugEditRoute
+  AuthenticatedCategorySlugEditRoute: typeof AuthenticatedCategorySlugEditRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedRecipeNewRoute: AuthenticatedRecipeNewRoute,
-  AuthenticatedRecipeSlugEditRoute: AuthenticatedRecipeSlugEditRoute,
+  AuthenticatedCategorySlugEditRoute: AuthenticatedCategorySlugEditRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -157,7 +162,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
-  RecipeSlugIndexRoute: RecipeSlugIndexRoute,
+  CategorySlugIndexRoute: CategorySlugIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -4,7 +4,7 @@ import { RecipeRoute } from "@/components/RecipeRoute";
 import { getVisibleRecipe } from "@/lib/recipes.functions";
 import { recipeDescription } from "@/lib/recipes";
 
-export const Route = createFileRoute("/recipe/$slug/")({
+export const Route = createFileRoute("/$category/$slug/")({
   loader: ({ params }) => getVisibleRecipe({ data: { slug: params.slug } }),
   head: ({ loaderData }) => {
     if (!loaderData) {

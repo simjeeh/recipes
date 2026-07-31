@@ -4,7 +4,7 @@ import { EyeOff, Pencil } from "lucide-react";
 import { IngredientsList } from "@/components/IngredientsList";
 import { ProcessSteps } from "@/components/flow/ProcessSteps";
 import { useAdminSession } from "@/hooks/useAdminSession";
-import type { Recipe } from "@/lib/recipes";
+import { categorySlug, type Recipe } from "@/lib/recipes";
 
 export function RecipeDetail({ recipe }: { recipe: Recipe }) {
   const { isAdmin } = useAdminSession();
@@ -37,8 +37,8 @@ export function RecipeDetail({ recipe }: { recipe: Recipe }) {
           ) : null}
           {isAdmin ? (
             <Link
-              to="/recipe/$slug/edit"
-              params={{ slug: recipe.slug }}
+              to="/$category/$slug/edit"
+              params={{ category: categorySlug(recipe.category), slug: recipe.slug }}
               className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm font-medium transition-colors hover:bg-white/5 hover:text-primary"
             >
               <Pencil className="h-4 w-4" aria-hidden="true" />

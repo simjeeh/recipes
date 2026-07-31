@@ -6,7 +6,7 @@ import { EyeOff, Plus } from "lucide-react";
 import { useAdminSession } from "@/hooks/useAdminSession";
 import { useRecipeSearch } from "@/hooks/useRecipeSearch";
 import { listAllRecipes, listVisibleRecipes } from "@/lib/recipes.functions";
-import { RECIPE_CATEGORIES, fuzzyMatch, type RecipeSummary } from "@/lib/recipes";
+import { RECIPE_CATEGORIES, categorySlug, fuzzyMatch, type RecipeSummary } from "@/lib/recipes";
 
 const TITLE = "Recipes — a personal recipe collection";
 const DESCRIPTION =
@@ -83,8 +83,8 @@ function Index() {
                 {section.items.map((recipe) => (
                   <li key={recipe.id}>
                     <Link
-                      to="/recipe/$slug"
-                      params={{ slug: recipe.slug }}
+                      to="/$category/$slug"
+                      params={{ category: categorySlug(recipe.category), slug: recipe.slug }}
                       className="flex h-full items-start justify-between gap-3 rounded-xl border border-border bg-card px-5 py-4 transition-colors hover:border-primary/60 hover:bg-white/5"
                     >
                       <span className="min-w-0 font-semibold text-foreground">{recipe.title}</span>
