@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as RecipeSlugIndexRouteImport } from './routes/recipe.$slug.index'
 import { Route as RecipeSlugFlowBRouteImport } from './routes/recipe.$slug.flow-b'
@@ -18,6 +19,10 @@ import { Route as AuthenticatedRecipeSlugEditRouteImport } from './routes/_authe
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -37,9 +42,9 @@ const RecipeSlugFlowBRoute = RecipeSlugFlowBRouteImport.update({
 } as any)
 const AuthenticatedRecipeSlugEditRoute =
   AuthenticatedRecipeSlugEditRouteImport.update({
-    id: '/_authenticated/recipe/$slug/edit',
+    id: '/recipe/$slug/edit',
     path: '/recipe/$slug/edit',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -59,6 +64,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/recipe/$slug/flow-b': typeof RecipeSlugFlowBRoute
   '/recipe/$slug/': typeof RecipeSlugIndexRoute
@@ -82,6 +88,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/_authenticated'
     | '/auth'
     | '/recipe/$slug/flow-b'
     | '/recipe/$slug/'
@@ -90,10 +97,10 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   RecipeSlugFlowBRoute: typeof RecipeSlugFlowBRoute
   RecipeSlugIndexRoute: typeof RecipeSlugIndexRoute
-  AuthenticatedRecipeSlugEditRoute: typeof AuthenticatedRecipeSlugEditRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -103,6 +110,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -131,18 +145,39 @@ declare module '@tanstack/react-router' {
       path: '/recipe/$slug/edit'
       fullPath: '/recipe/$slug/edit'
       preLoaderRoute: typeof AuthenticatedRecipeSlugEditRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedRecipeSlugEditRoute: typeof AuthenticatedRecipeSlugEditRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedRecipeSlugEditRoute: AuthenticatedRecipeSlugEditRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   RecipeSlugFlowBRoute: RecipeSlugFlowBRoute,
   RecipeSlugIndexRoute: RecipeSlugIndexRoute,
-  AuthenticatedRecipeSlugEditRoute: AuthenticatedRecipeSlugEditRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
