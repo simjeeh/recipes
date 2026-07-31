@@ -105,9 +105,6 @@ export function RecipeDetail({ recipe: source }: { recipe: Recipe }) {
                 onChange={(event) => setCups(event.target.value)}
                 className="w-24 rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground outline-none transition-colors focus:border-primary/60"
               />
-              <span className="text-xs text-muted-foreground">
-                Amounts update as you type
-              </span>
             </div>
           ) : null}
           <IngredientsList ingredients={ingredients} />
