@@ -413,10 +413,6 @@ function EditRecipePage() {
   );
 }
 
-function SectionHeading({ title, onAdd }: { title: string; onAdd: () => void }) {
-  return SectionHeadingImpl({ title, onAdd });
-}
-
 function LinkPicker({
   options,
   value,
@@ -449,7 +445,7 @@ function LinkPicker({
   );
 }
 
-function SectionHeadingImpl({ title, onAdd }: { title: string; onAdd: () => void }) {
+function SectionHeading({ title, onAdd }: { title: string; onAdd: () => void }) {
   return (
     <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
       <h2 className="min-w-0 text-xs font-bold uppercase tracking-[0.2em] text-primary">{title}</h2>
