@@ -313,7 +313,8 @@ function EditRecipePage() {
           <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-primary">Process steps</h2>
           <p className="mt-2 text-xs text-muted-foreground">
             Steps flow top to bottom. Use the + under a step to add the next one, and add cards inside a
-            row to run them in parallel.
+            row for steps that branch. A row with several cards is either "at the same time" (done
+            together) or "choose one" (options shown as a single card with buttons).
           </p>
 
           {groups.length === 0 ? (
@@ -325,6 +326,38 @@ function EditRecipePage() {
           <div className="mt-4 space-y-2">
             {groups.map((group, gIndex) => (
               <div key={gIndex}>
+                {group.length > 1 ? (
+                  <div className="mb-2 inline-flex items-center gap-1 rounded-full border border-border bg-card p-1 text-[11px]">
+                    {[
+                      { value: false, label: "At the same time" },
+                      { value: true, label: "Choose one" },
+                    ].map((mode) => {
+                      const active = Boolean(group[0]?.alternative) === mode.value;
+                      return (
+                        <button
+                          key={String(mode.value)}
+                          type="button"
+                          onClick={() =>
+                            setGroups((prev) =>
+                              prev.map((g, i) =>
+                                i === gIndex
+                                  ? g.map((step) => ({ ...step, alternative: mode.value }))
+                                  : g,
+                              ),
+                            )
+                          }
+                          className={`rounded-full px-3 py-1 font-semibold transition-colors ${
+                            active
+                              ? "bg-primary/15 text-primary"
+                              : "text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          {mode.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : null}
                 <div
                   className={
                     group.length > 1
@@ -375,7 +408,7 @@ function EditRecipePage() {
                       />
                       <input
                         aria-label="Branch label"
-                        placeholder="Branch label (optional)"
+                        placeholder="Option name (optional)"
                         value={step.branch_label ?? ""}
                         onChange={(e) =>
                           updateStep(setGroups, gIndex, sIndex, { branch_label: e.target.value })
@@ -388,11 +421,15 @@ function EditRecipePage() {
 
                 <div className="flex items-center justify-center gap-2 py-2">
                   <AddButton
-                    label="Add parallel step"
+                    label="Add step beside"
                     subtle
                     onClick={() =>
                       setGroups((prev) =>
-                        prev.map((g, i) => (i === gIndex ? [...g, newStep()] : g)),
+                        prev.map((g, i) =>
+                          i === gIndex
+                            ? [...g, { ...newStep(), alternative: Boolean(g[0]?.alternative) }]
+                            : g,
+                        ),
                       )
                     }
                   />

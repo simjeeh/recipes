@@ -20,6 +20,11 @@ export type ProcessStep = {
   detail?: string;
   parents: string[];
   branch_label?: string;
+  /**
+   * Alternative steps sit side by side as mutually exclusive options ("or").
+   * Steps sharing a level without this flag are done at the same time.
+   */
+  alternative?: boolean;
   /** Secret steps are stripped from public reads and only shown to admins. */
   secret?: boolean;
   /** Links this step to another recipe. */
