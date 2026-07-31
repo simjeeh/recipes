@@ -45,7 +45,7 @@ export function ProcessSteps({ steps }: { steps: ProcessStep[] }) {
 function LineConnector() {
   return (
     <div className="flex justify-center py-1">
-      <span className="h-8 w-px bg-border" />
+      <span className="h-10 w-px bg-gradient-to-b from-primary/10 via-primary/50 to-primary/10" />
     </div>
   );
 }
@@ -54,15 +54,15 @@ function LineConnector() {
 function SplitConnector() {
   return (
     <div className="flex flex-col items-center py-1">
-      <span className="h-5 w-px bg-border" />
+      <span className="h-6 w-px bg-gradient-to-b from-primary/10 to-primary/50" />
       <div className="hidden w-1/2 md:block">
-        <div className="h-px w-full bg-border" />
+        <div className="h-px w-full bg-gradient-to-r from-primary/20 via-primary/50 to-primary/20" />
         <div className="flex justify-between">
-          <span className="h-5 w-px bg-border" />
-          <span className="h-5 w-px bg-border" />
+          <span className="h-6 w-px bg-gradient-to-b from-primary/50 to-primary/10" />
+          <span className="h-6 w-px bg-gradient-to-b from-primary/50 to-primary/10" />
         </div>
       </div>
-      <span className="h-5 w-px bg-border md:hidden" />
+      <span className="h-6 w-px bg-gradient-to-b from-primary/50 to-primary/10 md:hidden" />
     </div>
   );
 }
@@ -70,20 +70,26 @@ function SplitConnector() {
 function StepCard({ step, branch = false }: { step: ProcessStep; branch?: boolean }) {
   return (
     <div
-      className={`h-full rounded-lg border p-4 shadow-lg transition-colors ${
+      className={`group relative h-full overflow-hidden rounded-2xl border p-5 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 ${
         branch
-          ? "border-dashed border-primary/50 bg-primary/5"
-          : "border-border bg-card hover:border-primary/50"
-      }`}
+          ? "border-dashed border-primary/40 bg-primary/[0.04] hover:border-primary/70 hover:bg-primary/[0.08]"
+          : "border-border/70 bg-card/70 hover:border-primary/60 hover:bg-card"
+      } shadow-[0_1px_0_0_color-mix(in_oklab,var(--color-foreground)_6%,transparent)_inset,0_8px_24px_-16px_rgb(0_0_0_/_0.9)] hover:shadow-[0_1px_0_0_color-mix(in_oklab,var(--color-primary)_18%,transparent)_inset,0_18px_40px_-24px_color-mix(in_oklab,var(--color-primary)_45%,transparent)]`}
     >
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+      />
       {step.branch_label ? (
-        <span className="mb-2 inline-block rounded-full border border-primary/50 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+        <span className="mb-2.5 inline-flex items-center rounded-full border border-primary/40 bg-primary/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">
           {step.branch_label}
         </span>
       ) : null}
-      <p className="font-semibold leading-snug text-foreground">{step.label}</p>
+      <p className="text-[0.98rem] font-semibold leading-snug tracking-[-0.01em] text-foreground">
+        {step.label}
+      </p>
       {step.detail ? (
-        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{step.detail}</p>
+        <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{step.detail}</p>
       ) : null}
     </div>
   );

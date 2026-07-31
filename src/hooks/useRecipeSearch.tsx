@@ -1,12 +1,37 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 
-type SearchContextValue = { query: string; setQuery: (value: string) => void };
+import type { RecipeCategory } from "@/lib/recipes";
 
-const SearchContext = createContext<SearchContextValue>({ query: "", setQuery: () => {} });
+export type CategoryFilter = RecipeCategory | "All";
+
+type SearchContextValue = {
+  query: string;
+  setQuery: (value: string) => void;
+  category: CategoryFilter;
+  setCategory: (value: CategoryFilter) => void;
+};
+
+const SearchContext = createContext<SearchContextValue>({
+  query: "",
+  setQuery: () => {},
+  category: "All",
+  setCategory: () => {},
+});
 
 export function RecipeSearchProvider({ children }: { children: ReactNode }) {
-  const [query, setQuery] = useState("");
-  const value = useMemo(() => ({ query, setQuery }), [query]);
+  const [query, setQueryState] = useState("");
+  const [category, setCategory] = useState<CategoryFilter>("All");
+
+  // Typing a search resets the section filter back to "All".
+  const setQuery = useCallback((value: string) => {
+    setQueryState(value);
+    if (value.trim()) setCategory("All");
+  }, []);
+
+  const value = useMemo(
+    () => ({ query, setQuery, category, setCategory }),
+    [query, setQuery, category],
+  );
   return <SearchContext.Provider value={value}>{children}</SearchContext.Provider>;
 }
 
