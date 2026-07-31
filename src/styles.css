@@ -127,3 +127,12 @@
 .react-flow__attribution {
   display: none;
 }
+
+/* Horizontal pill lanes hide their scrollbar; edge fades signal overflow. */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
