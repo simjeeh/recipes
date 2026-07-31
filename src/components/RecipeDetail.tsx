@@ -2,7 +2,6 @@ import { Link } from "@tanstack/react-router";
 import { EyeOff, Pencil } from "lucide-react";
 
 import { IngredientsList } from "@/components/IngredientsList";
-import { ProcessFlowChartLazy } from "@/components/flow/ProcessFlowChartLazy";
 import { ProcessSteps } from "@/components/flow/ProcessSteps";
 import { useAdminSession } from "@/hooks/useAdminSession";
 import type { Recipe } from "@/lib/recipes";
