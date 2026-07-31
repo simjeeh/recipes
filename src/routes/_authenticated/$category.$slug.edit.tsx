@@ -595,11 +595,35 @@ function SecretToggle({
   onClick: () => void;
 }) {
   return (
+    <ToggleButton
+      label={label}
+      title={active ? "Secret — hidden from public" : "Public"}
+      active={active}
+      onClick={onClick}
+      icon={<Lock className="h-4 w-4" aria-hidden="true" />}
+    />
+  );
+}
+
+function ToggleButton({
+  label,
+  title,
+  active,
+  onClick,
+  icon,
+}: {
+  label: string;
+  title: string;
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+}) {
+  return (
     <button
       type="button"
       aria-label={label}
       aria-pressed={active}
-      title={active ? "Secret — hidden from public" : "Public"}
+      title={title}
       onClick={onClick}
       className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border transition-colors ${
         active
@@ -607,7 +631,7 @@ function SecretToggle({
           : "border-border text-muted-foreground hover:text-foreground"
       }`}
     >
-      <Lock className="h-4 w-4" aria-hidden="true" />
+      {icon}
     </button>
   );
 }
