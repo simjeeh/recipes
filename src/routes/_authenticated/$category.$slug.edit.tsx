@@ -207,142 +207,107 @@ function EditRecipePage() {
         </section>
 
         <section>
-          <SectionHeading
-            title="Process steps"
-            onAdd={() =>
-              setSteps((prev) => [
-                ...prev,
-                { id: `step-${prev.length + 1}-${Date.now()}`, label: "", parents: [] },
-              ])
-            }
-          />
+          <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-primary">Process steps</h2>
           <p className="mt-2 text-xs text-muted-foreground">
-            A step branches by listing more than one parent step, and two steps sharing a parent run in
-            parallel.
+            Steps flow top to bottom. Use the + under a step to add the next one, and add cards inside a
+            row to run them in parallel.
           </p>
-          <ul className="mt-4 space-y-4">
-            {steps.map((step, index) => (
-              <li key={step.id} className="rounded-lg border border-border bg-card p-4">
-                <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3">
-                  <input
-                    aria-label="Step label"
-                    placeholder="Blend the base"
-                    required
-                    value={step.label}
-                    onChange={(e) =>
-                      setSteps((prev) =>
-                        prev.map((item, i) => (i === index ? { ...item, label: e.target.value } : item)),
-                      )
-                    }
-                    className={inputClass}
-                  />
-                  <SecretToggle
-                    label="Mark step secret"
-                    active={Boolean(step.secret)}
-                    onClick={() =>
-                      setSteps((prev) =>
-                        prev.map((item, i) => (i === index ? { ...item, secret: !item.secret } : item)),
-                      )
-                    }
-                  />
-                  <RemoveButton
-                    label="Remove step"
-                    onClick={() => {
-                      setSteps((prev) =>
-                        prev
-                          .filter((_, i) => i !== index)
-                          .map((item) => ({
-                            ...item,
-                            parents: (item.parents ?? []).filter((p) => p !== step.id),
-                          })),
-                      );
-                    }}
-                  />
-                </div>
-                <textarea
-                  aria-label="Step detail"
-                  placeholder="Optional detail"
-                  rows={2}
-                  value={step.detail ?? ""}
-                  onChange={(e) =>
-                    setSteps((prev) =>
-                      prev.map((item, i) => (i === index ? { ...item, detail: e.target.value } : item)),
-                    )
+
+          {groups.length === 0 ? (
+            <div className="mt-4">
+              <AddButton label="Add first step" onClick={() => setGroups([[newStep()]])} />
+            </div>
+          ) : null}
+
+          <div className="mt-4 space-y-2">
+            {groups.map((group, gIndex) => (
+              <div key={gIndex}>
+                <div
+                  className={
+                    group.length > 1
+                      ? "grid gap-3 sm:grid-cols-2"
+                      : "grid gap-3"
                   }
-                  className={`${inputClass} mt-3 resize-y`}
-                />
-                <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                  <div>
-                    <span className="mb-1.5 block text-xs font-medium text-muted-foreground">
-                      Comes after
-                    </span>
-                    <div className="flex flex-wrap gap-2">
-                      {steps.filter((_, i) => i !== index).length === 0 ? (
-                        <span className="text-xs text-muted-foreground">First step</span>
-                      ) : null}
-                      {steps
-                        .filter((_, i) => i !== index)
-                        .map((other) => {
-                          const checked = (step.parents ?? []).includes(other.id);
-                          return (
-                            <label
-                              key={other.id}
-                              className={`cursor-pointer rounded-full border px-2.5 py-1 text-xs transition-colors ${
-                                checked
-                                  ? "border-primary bg-primary/15 text-primary"
-                                  : "border-border text-muted-foreground hover:text-foreground"
-                              }`}
-                            >
-                              <input
-                                type="checkbox"
-                                className="sr-only"
-                                checked={checked}
-                                onChange={() =>
-                                  setSteps((prev) =>
-                                    prev.map((item, i) =>
-                                      i === index
-                                        ? {
-                                            ...item,
-                                            parents: checked
-                                              ? (item.parents ?? []).filter((p) => p !== other.id)
-                                              : [...(item.parents ?? []), other.id],
-                                          }
-                                        : item,
-                                    ),
-                                  )
-                                }
-                              />
-                              {other.label || other.id}
-                            </label>
-                          );
-                        })}
+                >
+                  {group.map((step, sIndex) => (
+                    <div key={step.id} className="rounded-lg border border-border bg-card p-4">
+                      <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2">
+                        <input
+                          aria-label="Step label"
+                          placeholder="Blend the base"
+                          required
+                          value={step.label}
+                          onChange={(e) =>
+                            updateStep(setGroups, gIndex, sIndex, { label: e.target.value })
+                          }
+                          className={inputClass}
+                        />
+                        <SecretToggle
+                          label="Mark step secret"
+                          active={Boolean(step.secret)}
+                          onClick={() =>
+                            updateStep(setGroups, gIndex, sIndex, { secret: !step.secret })
+                          }
+                        />
+                        <RemoveButton
+                          label="Remove step"
+                          onClick={() =>
+                            setGroups((prev) =>
+                              prev
+                                .map((g, i) => (i === gIndex ? g.filter((_, j) => j !== sIndex) : g))
+                                .filter((g) => g.length > 0),
+                            )
+                          }
+                        />
+                      </div>
+                      <textarea
+                        aria-label="Step detail"
+                        placeholder="Optional detail"
+                        rows={2}
+                        value={step.detail ?? ""}
+                        onChange={(e) =>
+                          updateStep(setGroups, gIndex, sIndex, { detail: e.target.value })
+                        }
+                        className={`${inputClass} mt-3 resize-y`}
+                      />
+                      <input
+                        aria-label="Branch label"
+                        placeholder="Branch label (optional)"
+                        value={step.branch_label ?? ""}
+                        onChange={(e) =>
+                          updateStep(setGroups, gIndex, sIndex, { branch_label: e.target.value })
+                        }
+                        className={`${inputClass} mt-3`}
+                      />
                     </div>
-                  </div>
-                  <div>
-                    <label
-                      htmlFor={`branch-${step.id}`}
-                      className="mb-1.5 block text-xs font-medium text-muted-foreground"
-                    >
-                      Branch label (optional)
-                    </label>
-                    <input
-                      id={`branch-${step.id}`}
-                      placeholder="if using frozen fruit"
-                      value={step.branch_label ?? ""}
-                      onChange={(e) =>
-                        setSteps((prev) =>
-                          prev.map((item, i) =>
-                            i === index ? { ...item, branch_label: e.target.value } : item,
-                          ),
-                        )
-                      }
-                      className={inputClass}
-                    />
-                  </div>
+                  ))}
                 </div>
-              </li>
+
+                <div className="flex items-center justify-center gap-2 py-2">
+                  <AddButton
+                    label="Add parallel step"
+                    subtle
+                    onClick={() =>
+                      setGroups((prev) =>
+                        prev.map((g, i) => (i === gIndex ? [...g, newStep()] : g)),
+                      )
+                    }
+                  />
+                  <AddButton
+                    label="Add step below"
+                    subtle
+                    onClick={() =>
+                      setGroups((prev) => [
+                        ...prev.slice(0, gIndex + 1),
+                        [newStep()],
+                        ...prev.slice(gIndex + 1),
+                      ])
+                    }
+                  />
+                </div>
+              </div>
             ))}
-          </ul>
+          </div>
         </section>
 
         <div className="flex flex-wrap items-center gap-3">
