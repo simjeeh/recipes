@@ -1,14 +1,16 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { LogOut, Salad, UserRound } from "lucide-react";
+import { LogOut, Salad, Search, UserRound } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminSession } from "@/hooks/useAdminSession";
+import { useRecipeSearch } from "@/hooks/useRecipeSearch";
 
 export function SiteHeader() {
   const { isAdmin, email } = useAdminSession();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { query, setQuery } = useRecipeSearch();
 
   async function signOut() {
     await queryClient.cancelQueries();
@@ -19,7 +21,7 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur-md">
-      <div className="mx-auto grid max-w-5xl grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-5 py-4 sm:px-8">
+      <div className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,1fr)] sm:gap-6 sm:px-6">
         <Link
           to="/"
           className="flex min-w-0 items-center gap-2 text-lg font-bold text-foreground transition-colors hover:text-primary"
@@ -28,7 +30,24 @@ export function SiteHeader() {
           <span className="truncate">Recipes</span>
         </Link>
 
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="order-last col-span-2 min-w-0 sm:order-none sm:col-span-1">
+          <label className="relative block">
+            <span className="sr-only">Search recipes</span>
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden="true"
+            />
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search recipes"
+              className="w-full rounded-md border border-border bg-card py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/60 focus:outline-none"
+            />
+          </label>
+        </div>
+
+        <div className="flex shrink-0 items-center justify-end gap-2">
           {isAdmin ? (
             <>
               <span className="hidden max-w-[16ch] truncate text-sm text-muted-foreground sm:block">
