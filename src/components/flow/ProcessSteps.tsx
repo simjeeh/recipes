@@ -82,7 +82,7 @@ function Row({ row, nested = false }: { row: ProcessRow; nested?: boolean }) {
             <RowList rows={lane.rows} nested />
             <span
               aria-hidden="true"
-              className="mx-auto hidden w-px flex-1 bg-primary/40 md:block"
+              className="mx-auto hidden w-px flex-1 bg-gradient-to-b from-primary/25 via-primary/40 to-primary/50 md:block"
             />
           </div>
         ))}
