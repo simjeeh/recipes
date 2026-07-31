@@ -5,8 +5,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { CircleDashed, Eye, EyeOff, Loader2, Lock, Plus, Trash2 } from "lucide-react";
 
 import type { Ingredient, ProcessStep, RecipeLink } from "@/lib/recipes";
-import type { ProcessRow } from "@/lib/recipes";
-import { categorySlug, rowsToSteps, toProcessRows } from "@/lib/recipes";
+import type { ProcessBranch, ProcessRow } from "@/lib/recipes";
+import { categorySlug, collectRowSteps, rowsToSteps, toProcessRows } from "@/lib/recipes";
 import {
   getRecipeForAdmin,
   listAllRecipes,
@@ -43,22 +43,30 @@ function newStep(): ProcessStep {
 function setRowMode(row: ProcessRow, options: boolean): ProcessRow {
   if (options) {
     if (row.kind === "options") return row;
-    return { kind: "options", branches: row.steps.map((step) => [step]) };
+    return {
+      kind: "options",
+      branches: row.steps.map((step) => ({
+        label: step.branch_label ?? "",
+        rows: [{ kind: "steps", steps: [step] } as ProcessRow],
+      })),
+    };
   }
   if (row.kind === "steps") return row;
-  return { kind: "steps", steps: row.branches.flat() };
+  return { kind: "steps", steps: collectRowSteps(row.branches.flatMap((b) => b.rows)) };
+}
+
+function newBranch(): ProcessBranch {
+  return { label: "", rows: [{ kind: "steps", steps: [newStep()] }] };
 }
 
 function StepEditor({
   step,
   onChange,
   onRemove,
-  showBranchLabel = true,
 }: {
   step: ProcessStep;
   onChange: (patch: Partial<ProcessStep>) => void;
   onRemove: () => void;
-  showBranchLabel?: boolean;
 }) {
   return (
     <div className="rounded-lg border border-border bg-card p-4">
@@ -85,15 +93,6 @@ function StepEditor({
         onChange={(e) => onChange({ detail: e.target.value })}
         className={`${inputClass} mt-3 resize-y`}
       />
-      {showBranchLabel ? (
-        <input
-          aria-label="Option name"
-          placeholder="Option name (optional)"
-          value={step.branch_label ?? ""}
-          onChange={(e) => onChange({ branch_label: e.target.value })}
-          className={`${inputClass} mt-3`}
-        />
-      ) : null}
     </div>
   );
 }
