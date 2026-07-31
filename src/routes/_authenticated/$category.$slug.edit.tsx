@@ -25,6 +25,55 @@ export const Route = createFileRoute("/_authenticated/$category/$slug/edit")({
 const inputClass =
   "w-full rounded-md border border-border bg-input px-3 py-2 text-sm text-foreground outline-none";
 
+let stepCounter = 0;
+
+function newStep(): ProcessStep {
+  stepCounter += 1;
+  return { id: `step-${Date.now()}-${stepCounter}`, label: "", parents: [] };
+}
+
+function toGroups(process: ProcessStep[]): ProcessStep[][] {
+  const byId = new Map(process.map((step) => [step.id, step]));
+  const depths = new Map<string, number>();
+  const depthOf = (step: ProcessStep, seen: Set<string>): number => {
+    if (depths.has(step.id)) return depths.get(step.id)!;
+    if (seen.has(step.id)) return 0;
+    seen.add(step.id);
+    const parents = (step.parents ?? []).map((id) => byId.get(id)).filter(Boolean) as ProcessStep[];
+    const depth = parents.length === 0 ? 0 : Math.max(...parents.map((p) => depthOf(p, seen))) + 1;
+    depths.set(step.id, depth);
+    return depth;
+  };
+  const groups: ProcessStep[][] = [];
+  for (const step of process) {
+    const depth = depthOf(step, new Set());
+    (groups[depth] ??= []).push(step);
+  }
+  return groups.filter(Boolean);
+}
+
+function fromGroups(groups: ProcessStep[][]): ProcessStep[] {
+  const result: ProcessStep[] = [];
+  groups.forEach((group, index) => {
+    const parents = index === 0 ? [] : groups[index - 1].map((step) => step.id);
+    for (const step of group) result.push({ ...step, parents });
+  });
+  return result;
+}
+
+function updateStep(
+  setGroups: React.Dispatch<React.SetStateAction<ProcessStep[][]>>,
+  gIndex: number,
+  sIndex: number,
+  patch: Partial<ProcessStep>,
+) {
+  setGroups((prev) =>
+    prev.map((group, i) =>
+      i === gIndex ? group.map((step, j) => (j === sIndex ? { ...step, ...patch } : step)) : group,
+    ),
+  );
+}
+
 function EditRecipePage() {
   const { category, slug } = Route.useParams();
   const navigate = useNavigate();
@@ -40,7 +89,7 @@ function EditRecipePage() {
 
   const [title, setTitle] = useState("");
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
-  const [steps, setSteps] = useState<ProcessStep[]>([]);
+  const [groups, setGroups] = useState<ProcessStep[][]>([]);
   const [hidden, setHidden] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -48,7 +97,7 @@ function EditRecipePage() {
     if (!recipe) return;
     setTitle(recipe.title);
     setIngredients(recipe.ingredients);
-    setSteps(recipe.process);
+    setGroups(toGroups(recipe.process));
     setHidden(recipe.is_hidden);
   }, [recipe]);
 
@@ -59,7 +108,7 @@ function EditRecipePage() {
           id: recipe!.id,
           title,
           ingredients,
-          process: steps.map((step) => ({ ...step, parents: step.parents ?? [] })),
+          process: fromGroups(groups),
         },
       }),
     onSuccess: async () => {
@@ -207,142 +256,107 @@ function EditRecipePage() {
         </section>
 
         <section>
-          <SectionHeading
-            title="Process steps"
-            onAdd={() =>
-              setSteps((prev) => [
-                ...prev,
-                { id: `step-${prev.length + 1}-${Date.now()}`, label: "", parents: [] },
-              ])
-            }
-          />
+          <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-primary">Process steps</h2>
           <p className="mt-2 text-xs text-muted-foreground">
-            A step branches by listing more than one parent step, and two steps sharing a parent run in
-            parallel.
+            Steps flow top to bottom. Use the + under a step to add the next one, and add cards inside a
+            row to run them in parallel.
           </p>
-          <ul className="mt-4 space-y-4">
-            {steps.map((step, index) => (
-              <li key={step.id} className="rounded-lg border border-border bg-card p-4">
-                <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3">
-                  <input
-                    aria-label="Step label"
-                    placeholder="Blend the base"
-                    required
-                    value={step.label}
-                    onChange={(e) =>
-                      setSteps((prev) =>
-                        prev.map((item, i) => (i === index ? { ...item, label: e.target.value } : item)),
-                      )
-                    }
-                    className={inputClass}
-                  />
-                  <SecretToggle
-                    label="Mark step secret"
-                    active={Boolean(step.secret)}
-                    onClick={() =>
-                      setSteps((prev) =>
-                        prev.map((item, i) => (i === index ? { ...item, secret: !item.secret } : item)),
-                      )
-                    }
-                  />
-                  <RemoveButton
-                    label="Remove step"
-                    onClick={() => {
-                      setSteps((prev) =>
-                        prev
-                          .filter((_, i) => i !== index)
-                          .map((item) => ({
-                            ...item,
-                            parents: (item.parents ?? []).filter((p) => p !== step.id),
-                          })),
-                      );
-                    }}
-                  />
-                </div>
-                <textarea
-                  aria-label="Step detail"
-                  placeholder="Optional detail"
-                  rows={2}
-                  value={step.detail ?? ""}
-                  onChange={(e) =>
-                    setSteps((prev) =>
-                      prev.map((item, i) => (i === index ? { ...item, detail: e.target.value } : item)),
-                    )
+
+          {groups.length === 0 ? (
+            <div className="mt-4">
+              <AddButton label="Add first step" onClick={() => setGroups([[newStep()]])} />
+            </div>
+          ) : null}
+
+          <div className="mt-4 space-y-2">
+            {groups.map((group, gIndex) => (
+              <div key={gIndex}>
+                <div
+                  className={
+                    group.length > 1
+                      ? "grid gap-3 sm:grid-cols-2"
+                      : "grid gap-3"
                   }
-                  className={`${inputClass} mt-3 resize-y`}
-                />
-                <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                  <div>
-                    <span className="mb-1.5 block text-xs font-medium text-muted-foreground">
-                      Comes after
-                    </span>
-                    <div className="flex flex-wrap gap-2">
-                      {steps.filter((_, i) => i !== index).length === 0 ? (
-                        <span className="text-xs text-muted-foreground">First step</span>
-                      ) : null}
-                      {steps
-                        .filter((_, i) => i !== index)
-                        .map((other) => {
-                          const checked = (step.parents ?? []).includes(other.id);
-                          return (
-                            <label
-                              key={other.id}
-                              className={`cursor-pointer rounded-full border px-2.5 py-1 text-xs transition-colors ${
-                                checked
-                                  ? "border-primary bg-primary/15 text-primary"
-                                  : "border-border text-muted-foreground hover:text-foreground"
-                              }`}
-                            >
-                              <input
-                                type="checkbox"
-                                className="sr-only"
-                                checked={checked}
-                                onChange={() =>
-                                  setSteps((prev) =>
-                                    prev.map((item, i) =>
-                                      i === index
-                                        ? {
-                                            ...item,
-                                            parents: checked
-                                              ? (item.parents ?? []).filter((p) => p !== other.id)
-                                              : [...(item.parents ?? []), other.id],
-                                          }
-                                        : item,
-                                    ),
-                                  )
-                                }
-                              />
-                              {other.label || other.id}
-                            </label>
-                          );
-                        })}
+                >
+                  {group.map((step, sIndex) => (
+                    <div key={step.id} className="rounded-lg border border-border bg-card p-4">
+                      <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2">
+                        <input
+                          aria-label="Step label"
+                          placeholder="Blend the base"
+                          required
+                          value={step.label}
+                          onChange={(e) =>
+                            updateStep(setGroups, gIndex, sIndex, { label: e.target.value })
+                          }
+                          className={inputClass}
+                        />
+                        <SecretToggle
+                          label="Mark step secret"
+                          active={Boolean(step.secret)}
+                          onClick={() =>
+                            updateStep(setGroups, gIndex, sIndex, { secret: !step.secret })
+                          }
+                        />
+                        <RemoveButton
+                          label="Remove step"
+                          onClick={() =>
+                            setGroups((prev) =>
+                              prev
+                                .map((g, i) => (i === gIndex ? g.filter((_, j) => j !== sIndex) : g))
+                                .filter((g) => g.length > 0),
+                            )
+                          }
+                        />
+                      </div>
+                      <textarea
+                        aria-label="Step detail"
+                        placeholder="Optional detail"
+                        rows={2}
+                        value={step.detail ?? ""}
+                        onChange={(e) =>
+                          updateStep(setGroups, gIndex, sIndex, { detail: e.target.value })
+                        }
+                        className={`${inputClass} mt-3 resize-y`}
+                      />
+                      <input
+                        aria-label="Branch label"
+                        placeholder="Branch label (optional)"
+                        value={step.branch_label ?? ""}
+                        onChange={(e) =>
+                          updateStep(setGroups, gIndex, sIndex, { branch_label: e.target.value })
+                        }
+                        className={`${inputClass} mt-3`}
+                      />
                     </div>
-                  </div>
-                  <div>
-                    <label
-                      htmlFor={`branch-${step.id}`}
-                      className="mb-1.5 block text-xs font-medium text-muted-foreground"
-                    >
-                      Branch label (optional)
-                    </label>
-                    <input
-                      id={`branch-${step.id}`}
-                      placeholder="if using frozen fruit"
-                      value={step.branch_label ?? ""}
-                      onChange={(e) =>
-                        setSteps((prev) =>
-                          prev.map((item, i) =>
-                            i === index ? { ...item, branch_label: e.target.value } : item,
-                          ),
-                        )
-                      }
-                      className={inputClass}
-                    />
-                  </div>
+                  ))}
                 </div>
-              </li>
+
+                <div className="flex items-center justify-center gap-2 py-2">
+                  <AddButton
+                    label="Add parallel step"
+                    subtle
+                    onClick={() =>
+                      setGroups((prev) =>
+                        prev.map((g, i) => (i === gIndex ? [...g, newStep()] : g)),
+                      )
+                    }
+                  />
+                  <AddButton
+                    label="Add step below"
+                    subtle
+                    onClick={() =>
+                      setGroups((prev) => [
+                        ...prev.slice(0, gIndex + 1),
+                        [newStep()],
+                        ...prev.slice(gIndex + 1),
+                      ])
+                    }
+                  />
+                </div>
+              </div>
             ))}
-          </ul>
+          </div>
         </section>
 
         <div className="flex flex-wrap items-center gap-3">
@@ -395,6 +409,42 @@ function RemoveButton({ label, onClick }: { label: string; onClick: () => void }
       className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:border-destructive hover:text-destructive"
     >
       <Trash2 className="h-4 w-4" aria-hidden="true" />
+    </button>
+  );
+}
+
+function AddButton({
+  label,
+  onClick,
+  subtle,
+}: {
+  label: string;
+  onClick: () => void;
+  subtle?: boolean;
+}) {
+  if (subtle) {
+    return (
+      <button
+        type="button"
+        aria-label={label}
+        title={label}
+        onClick={onClick}
+        className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-border/70 px-3 py-1 text-[11px] font-medium text-muted-foreground/70 transition-colors hover:border-primary/60 hover:text-primary"
+      >
+        <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+        {label}
+      </button>
+    );
+  }
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-white/5 hover:text-primary"
+    >
+      <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+      {label}
     </button>
   );
 }
