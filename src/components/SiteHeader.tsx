@@ -59,12 +59,15 @@ export function SiteHeader() {
           >
             <SelectTrigger
               aria-label="Filter by section"
-              className="h-9 w-[7.5rem] shrink-0 gap-2 rounded-md border-border bg-card px-3 text-sm text-foreground shadow-none transition-colors hover:border-primary/40 focus:border-primary/60 focus:ring-0 focus:ring-offset-0 [&>svg]:opacity-60"
+              className="h-9 w-[7.5rem] shrink-0 gap-2 rounded-md border-border bg-card px-3 text-sm text-muted-foreground shadow-none transition-colors hover:border-primary/40 focus:border-primary/60 focus:ring-0 focus:ring-offset-0 [&>svg]:opacity-60"
             >
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="rounded-md border-border bg-card/95 p-1 backdrop-blur-md">
-              <SelectItem value="All" className="rounded-sm text-sm focus:bg-primary/10 focus:text-primary">
+              <SelectItem
+                value="All"
+                className="rounded-sm text-sm text-muted-foreground focus:bg-primary/10 focus:text-primary"
+              >
                 All
               </SelectItem>
               {RECIPE_CATEGORIES.map((option) => (
