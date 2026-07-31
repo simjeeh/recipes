@@ -378,6 +378,150 @@ function EditRecipePage() {
   );
 }
 
+/** Recursive editor for a chain of process rows. Options nest inside options. */
+function RowsEditor({
+  rows,
+  onChange,
+  depth = 0,
+}: {
+  rows: ProcessRow[];
+  onChange: (rows: ProcessRow[]) => void;
+  depth?: number;
+}) {
+  const addAt = (index: number) =>
+    onChange([
+      ...rows.slice(0, index),
+      { kind: "steps", steps: [newStep()] },
+      ...rows.slice(index),
+    ]);
+
+  if (!rows.length) {
+    return <AddButton label="Add step" subtle={depth > 0} onClick={() => addAt(0)} />;
+  }
+
+  return (
+    <div className="space-y-3">
+      {rows.map((row, rIndex) => {
+        const patchRow = (next: ProcessRow) =>
+          onChange(rows.map((item, i) => (i === rIndex ? next : item)));
+        const dropRow = () => onChange(rows.filter((_, i) => i !== rIndex));
+        const isOptions = row.kind === "options";
+
+        return (
+          <div key={rIndex}>
+            <div className="rounded-xl border border-border/70 bg-card/40 p-3 sm:p-4">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <div className="inline-flex items-center gap-1 rounded-full border border-border bg-card p-1 text-[11px]">
+                  {[
+                    { value: false, label: "At the same time" },
+                    { value: true, label: "Pick one" },
+                  ].map((mode) => (
+                    <button
+                      key={String(mode.value)}
+                      type="button"
+                      onClick={() => patchRow(setRowMode(row, mode.value))}
+                      className={`rounded-full px-3 py-1 font-semibold transition-colors ${
+                        isOptions === mode.value
+                          ? "bg-primary/15 text-primary"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {mode.label}
+                    </button>
+                  ))}
+                </div>
+                <RemoveButton label="Remove row" onClick={dropRow} />
+              </div>
+
+              {row.kind === "steps" ? (
+                <>
+                  <div className={row.steps.length > 1 ? "grid gap-3 sm:grid-cols-2" : "grid gap-3"}>
+                    {row.steps.map((step, sIndex) => (
+                      <StepEditor
+                        key={step.id}
+                        step={step}
+                        onChange={(patch) =>
+                          patchRow({
+                            kind: "steps",
+                            steps: row.steps.map((item, i) =>
+                              i === sIndex ? { ...item, ...patch } : item,
+                            ),
+                          })
+                        }
+                        onRemove={() => {
+                          const next = row.steps.filter((_, i) => i !== sIndex);
+                          if (!next.length) dropRow();
+                          else patchRow({ kind: "steps", steps: next });
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <div className="mt-3 flex justify-center">
+                    <AddButton
+                      label="Add step at the same time"
+                      subtle
+                      onClick={() => patchRow({ kind: "steps", steps: [...row.steps, newStep()] })}
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="space-y-3">
+                    {row.branches.map((branch, bIndex) => {
+                      const patchBranch = (next: ProcessBranch | null) => {
+                        const branches = row.branches
+                          .map((item, i) => (i === bIndex ? next : item))
+                          .filter((item): item is ProcessBranch => Boolean(item));
+                        if (!branches.length) dropRow();
+                        else patchRow({ kind: "options", branches });
+                      };
+                      return (
+                        <div
+                          key={bIndex}
+                          className="rounded-lg border border-dashed border-primary/35 bg-primary/[0.03] p-3"
+                        >
+                          <div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+                            <input
+                              aria-label="Option name"
+                              placeholder={`Option ${bIndex + 1} name`}
+                              value={branch.label}
+                              onChange={(e) => patchBranch({ ...branch, label: e.target.value })}
+                              className={inputClass}
+                            />
+                            <RemoveButton label="Remove option" onClick={() => patchBranch(null)} />
+                          </div>
+                          <RowsEditor
+                            rows={branch.rows}
+                            depth={depth + 1}
+                            onChange={(next) => patchBranch({ ...branch, rows: next })}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="mt-3 flex justify-center">
+                    <AddButton
+                      label="Add option"
+                      subtle
+                      onClick={() =>
+                        patchRow({ kind: "options", branches: [...row.branches, newBranch()] })
+                      }
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="flex items-center justify-center py-2">
+              <AddButton label="Add step below" subtle onClick={() => addAt(rIndex + 1)} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function LinkPicker({
   options,
   value,
