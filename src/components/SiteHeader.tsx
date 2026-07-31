@@ -1,8 +1,15 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { ChevronDown, LogOut, Salad, Search, UserRound } from "lucide-react";
+import { LogOut, Salad, Search, UserRound } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAdminSession } from "@/hooks/useAdminSession";
 import { useRecipeSearch } from "@/hooks/useRecipeSearch";
 import { RECIPE_CATEGORIES } from "@/lib/recipes";
@@ -46,25 +53,31 @@ export function SiteHeader() {
               className="w-full rounded-md border border-border bg-card py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/60 focus:outline-none"
             />
           </label>
-          <label className="group relative block shrink-0">
-            <span className="sr-only">Filter by section</span>
-            <select
-              value={category}
-              onChange={(event) => setCategory(event.target.value as typeof category)}
-              className="h-9 cursor-pointer appearance-none rounded-md border border-border bg-card py-2 pl-3 pr-9 text-sm text-foreground transition-colors hover:border-primary/40 focus:border-primary/60 focus:outline-none"
+          <Select
+            value={category}
+            onValueChange={(value) => setCategory(value as typeof category)}
+          >
+            <SelectTrigger
+              aria-label="Filter by section"
+              className="h-9 w-[7.5rem] shrink-0 gap-2 rounded-md border-border bg-card px-3 text-sm text-foreground shadow-none transition-colors hover:border-primary/40 focus:border-primary/60 focus:ring-0 focus:ring-offset-0 [&>svg]:opacity-60"
             >
-              <option value="All">All</option>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="rounded-md border-border bg-card/95 p-1 backdrop-blur-md">
+              <SelectItem value="All" className="rounded-sm text-sm focus:bg-primary/10 focus:text-primary">
+                All
+              </SelectItem>
               {RECIPE_CATEGORIES.map((option) => (
-                <option key={option} value={option}>
+                <SelectItem
+                  key={option}
+                  value={option}
+                  className="rounded-sm text-sm focus:bg-primary/10 focus:text-primary"
+                >
                   {option}
-                </option>
+                </SelectItem>
               ))}
-            </select>
-            <ChevronDown
-              className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-hover:text-primary"
-              aria-hidden="true"
-            />
-          </label>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="flex shrink-0 items-center justify-end gap-2">
