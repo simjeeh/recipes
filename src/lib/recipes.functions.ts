@@ -45,6 +45,20 @@ type Row = {
   updated_at: string;
 };
 
+/** Removes secret ingredients/steps (and dangling parent links) for public reads. */
+function stripSecrets(recipe: Recipe): Recipe {
+  const steps = recipe.process.filter((step) => !step.secret);
+  const ids = new Set(steps.map((s) => s.id));
+  return {
+    ...recipe,
+    ingredients: recipe.ingredients.filter((i) => !i.secret),
+    process: steps.map((step) => ({
+      ...step,
+      parents: (step.parents ?? []).filter((p) => ids.has(p)),
+    })),
+  };
+}
+
 function toRecipe(row: Row): Recipe {
   return {
     id: row.id,
@@ -59,8 +73,8 @@ function toRecipe(row: Row): Recipe {
   };
 }
 
-function toSummary(row: Row): RecipeSummary {
-  const recipe = toRecipe(row);
+function toSummary(row: Row, isPublic = false): RecipeSummary {
+  const recipe = isPublic ? stripSecrets(toRecipe(row)) : toRecipe(row);
   return {
     id: recipe.id,
     title: recipe.title,
@@ -80,7 +94,7 @@ export const listVisibleRecipes = createServerFn({ method: "GET" }).handler(asyn
     .select(RECIPE_COLUMNS)
     .order("created_at", { ascending: true });
   if (error) throw new Error(error.message);
-  return ((data ?? []) as Row[]).map(toSummary);
+  return ((data ?? []) as Row[]).map((row) => toSummary(row, true));
 });
 
 export const getVisibleRecipe = createServerFn({ method: "GET" })
@@ -92,7 +106,7 @@ export const getVisibleRecipe = createServerFn({ method: "GET" })
       .eq("slug", data.slug)
       .maybeSingle();
     if (error) throw new Error(error.message);
-    return row ? toRecipe(row as Row) : null;
+    return row ? stripSecrets(toRecipe(row as Row)) : null;
   });
 
 async function assertAdmin(context: { supabase: ReturnType<typeof publicClient>; userId: string; claims: Record<string, unknown> }) {
@@ -118,7 +132,7 @@ export const listAllRecipes = createServerFn({ method: "GET" })
       .select(RECIPE_COLUMNS)
       .order("created_at", { ascending: true });
     if (error) throw new Error(error.message);
-    return ((data ?? []) as Row[]).map(toSummary);
+    return ((data ?? []) as Row[]).map((row) => toSummary(row));
   });
 
 export const getRecipeForAdmin = createServerFn({ method: "POST" })
@@ -139,6 +153,7 @@ const ingredientSchema = z.object({
   amount: z.string().max(40).default(""),
   unit: z.string().max(40).default(""),
   name: z.string().min(1).max(160),
+  secret: z.boolean().optional(),
 });
 
 const stepSchema = z.object({
@@ -147,6 +162,7 @@ const stepSchema = z.object({
   detail: z.string().max(1000).optional(),
   parents: z.array(z.string().min(1).max(60)).default([]),
   branch_label: z.string().max(80).optional(),
+  secret: z.boolean().optional(),
 });
 
 const updateSchema = z.object({

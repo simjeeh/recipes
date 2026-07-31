@@ -91,6 +91,11 @@ function StepCard({ step, branch = false }: { step: ProcessStep; branch?: boolea
       {step.detail ? (
         <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{step.detail}</p>
       ) : null}
+      {step.secret ? (
+        <span className="mt-3 inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+          Secret
+        </span>
+      ) : null}
     </div>
   );
 }

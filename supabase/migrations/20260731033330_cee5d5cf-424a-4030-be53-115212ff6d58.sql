@@ -1,0 +1,2 @@
+ALTER TABLE public.recipes DROP CONSTRAINT recipes_category_check;
+ALTER TABLE public.recipes ADD CONSTRAINT recipes_category_check CHECK (category = ANY (ARRAY['Main'::text,'Breakfast'::text,'Sides'::text,'Snacks'::text,'Desserts'::text,'Drinks'::text,'Sauces'::text]));
