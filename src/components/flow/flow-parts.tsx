@@ -20,7 +20,7 @@ export function SplitConnector() {
       <span className="h-6 w-px bg-gradient-to-b from-primary/10 to-primary/50" />
       <div className="hidden w-full md:block">
         <LaneBar />
-        <LaneStubs />
+        <LaneStubs towards="lanes" />
       </div>
       <span className="h-6 w-px bg-gradient-to-b from-primary/50 to-primary/10 md:hidden" />
     </div>
@@ -63,9 +63,9 @@ export const pillClass =
  */
 export function MergeConnector() {
   return (
-    <div className="flex flex-col items-center py-1">
+    <div className="flex flex-col items-center pb-1">
       <div className="hidden w-full md:block">
-        <LaneStubs />
+        <LaneStubs towards="bar" />
         <LaneBar />
       </div>
       <span className="h-6 w-px bg-gradient-to-b from-primary/10 to-primary/50 md:hidden" />
