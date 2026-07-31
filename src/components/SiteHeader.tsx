@@ -66,7 +66,7 @@ export function SiteHeader() {
             <SelectContent
               align="start"
               sideOffset={-1}
-              className="w-[var(--radix-select-trigger-width)] min-w-[var(--radix-select-trigger-width)] rounded-t-none rounded-b-lg border-x border-b border-t-0 border-border bg-card p-1 shadow-none"
+              className="-mt-[3px] w-[var(--radix-select-trigger-width)] min-w-[var(--radix-select-trigger-width)] rounded-t-none rounded-b-lg border-x border-b border-t-0 border-border bg-card p-1 shadow-none"
             >
               <SelectItem
                 value="All"
