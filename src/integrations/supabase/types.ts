@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       recipes: {
         Row: {
+          category: string
           created_at: string
           id: string
           ingredients: Json
@@ -26,6 +27,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          category?: string
           created_at?: string
           id?: string
           ingredients?: Json
@@ -36,6 +38,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          category?: string
           created_at?: string
           id?: string
           ingredients?: Json
