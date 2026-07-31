@@ -75,9 +75,15 @@ function Row({ row, nested = false }: { row: ProcessRow; nested?: boolean }) {
   }
 
   if (row.kind === "parallel") {
-    const Lane = ({ lane }: { lane: ProcessBranch }) => (
+    const Lane = ({
+      lane,
+      arrow,
+    }: {
+      lane: ProcessBranch;
+      arrow?: "left" | "right";
+    }) => (
       <div className="flex h-full flex-col">
-        {lane.label ? <LaneLabel>{lane.label}</LaneLabel> : null}
+        {lane.label ? <LaneLabel arrow={arrow}>{lane.label}</LaneLabel> : null}
         <RowList rows={lane.rows} nested />
         <span
           aria-hidden="true"
