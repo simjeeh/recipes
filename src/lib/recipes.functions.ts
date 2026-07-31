@@ -9,11 +9,12 @@ import type {
   ProcessStep,
   Recipe,
   RecipeCategory,
+  RecipeScale,
   RecipeSummary,
 } from "./recipes";
 
 const RECIPE_COLUMNS =
-  "id, title, slug, category, ingredients, process, is_hidden, created_at, updated_at";
+  "id, title, slug, category, ingredients, process, scale, is_hidden, created_at, updated_at";
 
 function publicClient() {
   const url = process.env.SUPABASE_URL!;
@@ -40,6 +41,7 @@ type Row = {
   category: string;
   ingredients: unknown;
   process: unknown;
+  scale?: unknown;
   is_hidden: boolean;
   created_at: string;
   updated_at: string;
@@ -67,6 +69,7 @@ function toRecipe(row: Row): Recipe {
     category: (row.category as RecipeCategory) ?? "Main",
     ingredients: (row.ingredients as Ingredient[]) ?? [],
     process: (row.process as ProcessStep[]) ?? [],
+    scale: (row.scale as RecipeScale | null) ?? null,
     is_hidden: row.is_hidden,
     created_at: row.created_at,
     updated_at: row.updated_at,
@@ -181,6 +184,10 @@ const updateSchema = z.object({
   title: z.string().min(1).max(160),
   ingredients: z.array(ingredientSchema).max(200),
   process: z.array(stepSchema).max(100),
+  scale: z
+    .object({ label: z.string().min(1).max(40), default: z.number().positive().max(1000) })
+    .nullable()
+    .default(null),
 });
 
 function slugify(value: string) {
@@ -237,7 +244,12 @@ export const updateRecipe = createServerFn({ method: "POST" })
     await assertAdmin(context as never);
     const { error } = await context.supabase
       .from("recipes")
-      .update({ title: data.title, ingredients: data.ingredients, process: data.process })
+      .update({
+        title: data.title,
+        ingredients: data.ingredients,
+        process: data.process,
+        scale: data.scale,
+      })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };

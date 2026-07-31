@@ -33,6 +33,12 @@ export type ProcessStep = {
   link?: RecipeLink;
 };
 
+/** Optional scaling variable, e.g. { label: "Cups", default: 2 }. */
+export type RecipeScale = {
+  label: string;
+  default: number;
+};
+
 export type Recipe = {
   id: string;
   title: string;
@@ -40,6 +46,7 @@ export type Recipe = {
   category: RecipeCategory;
   ingredients: Ingredient[];
   process: ProcessStep[];
+  scale?: RecipeScale | null;
   is_hidden: boolean;
   created_at: string;
   updated_at: string;
@@ -357,13 +364,14 @@ export function scaleText(text: string, n: number): string {
   );
 }
 
-/** True when the recipe has any scalable placeholder. */
+/** True when the recipe defines a scaling variable. */
 export function isScalable(recipe: Recipe): boolean {
-  const hasToken = (value?: string) => Boolean(value && value.includes("{"));
-  return (
-    recipe.ingredients.some((i) => hasToken(i.amount) || hasToken(i.name)) ||
-    recipe.process.some((s) => hasToken(s.label) || hasToken(s.detail))
-  );
+  return Boolean(recipe.scale?.label);
+}
+
+/** Strips `{expression}` placeholders — process steps never carry amounts. */
+export function stripFormulas(text: string): string {
+  return text.replace(PLACEHOLDER, "").replace(/\s{2,}/g, " ").trim();
 }
 
 /** Returns the recipe with all placeholders resolved for `n` servings. */
@@ -375,10 +383,7 @@ export function scaleRecipe(recipe: Recipe, n: number): Recipe {
       amount: scaleText(ingredient.amount ?? "", n),
       name: scaleText(ingredient.name ?? "", n),
     })),
-    process: recipe.process.map((step) => ({
-      ...step,
-      label: scaleText(step.label, n),
-      detail: step.detail ? scaleText(step.detail, n) : step.detail,
-    })),
+    // Steps never hold amounts, so they are left untouched.
+    process: recipe.process,
   };
 }
