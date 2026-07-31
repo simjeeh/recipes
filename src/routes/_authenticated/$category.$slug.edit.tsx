@@ -7,7 +7,7 @@ import { Eye, EyeOff, Loader2, Lock, Plus, Trash2 } from "lucide-react";
 import type { Ingredient, ProcessStep } from "@/lib/recipes";
 import { getRecipeForAdmin, setRecipeHidden, updateRecipe } from "@/lib/recipes.functions";
 
-export const Route = createFileRoute("/_authenticated/recipe/$slug/edit")({
+export const Route = createFileRoute("/_authenticated/$category/$slug/edit")({
   head: () => ({
     meta: [
       { title: "Edit recipe — Recipes" },
