@@ -59,11 +59,15 @@ export function SiteHeader() {
           >
             <SelectTrigger
               aria-label="Filter by section"
-              className="h-9 w-[7.5rem] shrink-0 gap-2 rounded-lg border-border bg-card px-3 text-sm text-muted-foreground shadow-none transition-colors hover:border-primary/40 focus:border-primary/60 focus:ring-0 focus:ring-offset-0 [&>svg]:opacity-60"
+              className="h-9 w-[7.5rem] shrink-0 gap-2 rounded-lg border-border bg-card px-3 text-sm text-muted-foreground shadow-none transition-colors hover:border-primary/40 focus:border-primary/60 focus:ring-0 focus:ring-offset-0 data-[state=open]:rounded-b-none data-[state=open]:border-b-transparent [&>svg]:opacity-60"
             >
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="rounded-lg border-border bg-card p-1 shadow-xl">
+            <SelectContent
+              align="start"
+              sideOffset={-1}
+              className="-mt-[3px] w-[var(--radix-select-trigger-width)] min-w-[var(--radix-select-trigger-width)] rounded-t-none rounded-b-lg border-x border-b border-t-0 border-border bg-card p-1 shadow-none"
+            >
               <SelectItem
                 value="All"
                 className="rounded-sm text-sm text-muted-foreground focus:bg-primary/10 focus:text-primary"
