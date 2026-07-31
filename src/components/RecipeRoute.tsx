@@ -9,11 +9,9 @@ import type { Recipe } from "@/lib/recipes";
 export function RecipeRoute({
   slug,
   publicRecipe,
-  variant,
 }: {
   slug: string;
   publicRecipe: Recipe | null;
-  variant: "flow" | "steps";
 }) {
   const { isAdmin, loading } = useAdminSession();
   const fetchAdminRecipe = useServerFn(getRecipeForAdmin);
@@ -44,5 +42,5 @@ export function RecipeRoute({
     );
   }
 
-  return <RecipeDetail recipe={recipe} variant={variant} />;
+  return <RecipeDetail recipe={recipe} />;
 }

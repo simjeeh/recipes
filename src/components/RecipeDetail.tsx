@@ -2,18 +2,11 @@ import { Link } from "@tanstack/react-router";
 import { EyeOff, Pencil } from "lucide-react";
 
 import { IngredientsList } from "@/components/IngredientsList";
-import { ProcessFlowChartLazy } from "@/components/flow/ProcessFlowChartLazy";
 import { ProcessSteps } from "@/components/flow/ProcessSteps";
 import { useAdminSession } from "@/hooks/useAdminSession";
 import type { Recipe } from "@/lib/recipes";
 
-export function RecipeDetail({
-  recipe,
-  variant,
-}: {
-  recipe: Recipe;
-  variant: "flow" | "steps";
-}) {
+export function RecipeDetail({ recipe }: { recipe: Recipe }) {
   const { isAdmin } = useAdminSession();
 
   return (
@@ -67,47 +60,14 @@ export function RecipeDetail({
       </section>
 
       <section aria-labelledby="process-heading" className="mt-16">
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
-          <h2
-            id="process-heading"
-            className="text-xs font-bold uppercase tracking-[0.2em] text-primary"
-          >
-            Process
-          </h2>
-          <div className="flex shrink-0 items-center gap-1 rounded-md border border-border p-1 text-xs">
-            <Link
-              to="/recipe/$slug"
-              params={{ slug: recipe.slug }}
-              className={`rounded px-2.5 py-1 font-semibold transition-colors ${
-                variant === "flow"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Diagram
-            </Link>
-            <Link
-              to="/recipe/$slug/flow-b"
-              params={{ slug: recipe.slug }}
-              className={`rounded px-2.5 py-1 font-semibold transition-colors ${
-                variant === "steps"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Connector
-            </Link>
-          </div>
-        </div>
-        <p className="mt-3 text-sm text-muted-foreground">
-          Two layouts of the same steps — pick whichever you prefer and I&apos;ll keep it.
-        </p>
+        <h2
+          id="process-heading"
+          className="text-xs font-bold uppercase tracking-[0.2em] text-primary"
+        >
+          Process
+        </h2>
         <div className="mt-5">
-          {variant === "flow" ? (
-            <ProcessFlowChartLazy steps={recipe.process} />
-          ) : (
-            <ProcessSteps steps={recipe.process} />
-          )}
+          <ProcessSteps steps={recipe.process} />
         </div>
       </section>
     </article>

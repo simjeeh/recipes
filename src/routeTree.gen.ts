@@ -13,7 +13,6 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as RecipeSlugIndexRouteImport } from './routes/recipe.$slug.index'
-import { Route as RecipeSlugFlowBRouteImport } from './routes/recipe.$slug.flow-b'
 import { Route as AuthenticatedRecipeSlugEditRouteImport } from './routes/_authenticated/recipe.$slug.edit'
 
 const IndexRoute = IndexRouteImport.update({
@@ -35,11 +34,6 @@ const RecipeSlugIndexRoute = RecipeSlugIndexRouteImport.update({
   path: '/recipe/$slug/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RecipeSlugFlowBRoute = RecipeSlugFlowBRouteImport.update({
-  id: '/recipe/$slug/flow-b',
-  path: '/recipe/$slug/flow-b',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthenticatedRecipeSlugEditRoute =
   AuthenticatedRecipeSlugEditRouteImport.update({
     id: '/recipe/$slug/edit',
@@ -50,14 +44,12 @@ const AuthenticatedRecipeSlugEditRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/recipe/$slug/flow-b': typeof RecipeSlugFlowBRoute
   '/recipe/$slug/': typeof RecipeSlugIndexRoute
   '/recipe/$slug/edit': typeof AuthenticatedRecipeSlugEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/recipe/$slug/flow-b': typeof RecipeSlugFlowBRoute
   '/recipe/$slug': typeof RecipeSlugIndexRoute
   '/recipe/$slug/edit': typeof AuthenticatedRecipeSlugEditRoute
 }
@@ -66,31 +58,19 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
-  '/recipe/$slug/flow-b': typeof RecipeSlugFlowBRoute
   '/recipe/$slug/': typeof RecipeSlugIndexRoute
   '/_authenticated/recipe/$slug/edit': typeof AuthenticatedRecipeSlugEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/auth'
-    | '/recipe/$slug/flow-b'
-    | '/recipe/$slug/'
-    | '/recipe/$slug/edit'
+  fullPaths: '/' | '/auth' | '/recipe/$slug/' | '/recipe/$slug/edit'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/auth'
-    | '/recipe/$slug/flow-b'
-    | '/recipe/$slug'
-    | '/recipe/$slug/edit'
+  to: '/' | '/auth' | '/recipe/$slug' | '/recipe/$slug/edit'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
-    | '/recipe/$slug/flow-b'
     | '/recipe/$slug/'
     | '/_authenticated/recipe/$slug/edit'
   fileRoutesById: FileRoutesById
@@ -99,7 +79,6 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
-  RecipeSlugFlowBRoute: typeof RecipeSlugFlowBRoute
   RecipeSlugIndexRoute: typeof RecipeSlugIndexRoute
 }
 
@@ -133,13 +112,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RecipeSlugIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/recipe/$slug/flow-b': {
-      id: '/recipe/$slug/flow-b'
-      path: '/recipe/$slug/flow-b'
-      fullPath: '/recipe/$slug/flow-b'
-      preLoaderRoute: typeof RecipeSlugFlowBRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_authenticated/recipe/$slug/edit': {
       id: '/_authenticated/recipe/$slug/edit'
       path: '/recipe/$slug/edit'
@@ -165,7 +137,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
-  RecipeSlugFlowBRoute: RecipeSlugFlowBRoute,
   RecipeSlugIndexRoute: RecipeSlugIndexRoute,
 }
 export const routeTree = rootRouteImport

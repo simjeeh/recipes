@@ -30,5 +30,5 @@ export const Route = createFileRoute("/recipe/$slug/")({
 
 function RecipeDiagramPage() {
   const { slug } = Route.useParams();
-  return <RecipeRoute slug={slug} publicRecipe={Route.useLoaderData()} variant="flow" />;
+  return <RecipeRoute slug={slug} publicRecipe={Route.useLoaderData()} />;
 }

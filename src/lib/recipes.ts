@@ -16,6 +16,7 @@ export type Recipe = {
   id: string;
   title: string;
   slug: string;
+  category: RecipeCategory;
   ingredients: Ingredient[];
   process: ProcessStep[];
   is_hidden: boolean;
@@ -25,8 +26,32 @@ export type Recipe = {
 
 export type RecipeSummary = Pick<
   Recipe,
-  "id" | "title" | "slug" | "is_hidden" | "updated_at"
+  "id" | "title" | "slug" | "category" | "is_hidden" | "updated_at"
 > & { ingredientCount: number; stepCount: number };
+
+export const RECIPE_CATEGORIES = [
+  "Main",
+  "Breakfast",
+  "Sides",
+  "Snacks",
+  "Drinks",
+  "Sauces",
+] as const;
+
+export type RecipeCategory = (typeof RECIPE_CATEGORIES)[number];
+
+/** Lightweight fuzzy match: every query char appears in order in the target. */
+export function fuzzyMatch(query: string, target: string): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  const t = target.toLowerCase();
+  let i = 0;
+  for (const char of t) {
+    if (char === q[i]) i += 1;
+    if (i === q.length) return true;
+  }
+  return false;
+}
 
 export function formatIngredient(ingredient: Ingredient): string {
   return [ingredient.amount, ingredient.unit, ingredient.name]
