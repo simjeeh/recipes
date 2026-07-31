@@ -188,7 +188,7 @@ export const createRecipe = createServerFn({ method: "POST" })
     z
       .object({
         title: z.string().trim().min(1).max(160),
-        category: z.enum(["Main", "Breakfast", "Sides", "Snacks", "Desserts", "Drinks", "Sauces"]),
+        category: z.enum(["Main", "Breakfast", "Sides", "Snacks", "Desserts", "Drinks", "Sauces", "Components"]),
       })
       .parse(input),
   )
