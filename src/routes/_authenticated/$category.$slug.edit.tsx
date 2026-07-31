@@ -4,8 +4,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Eye, EyeOff, Loader2, Lock, Plus, Trash2 } from "lucide-react";
 
-import type { Ingredient, ProcessStep } from "@/lib/recipes";
-import { getRecipeForAdmin, setRecipeHidden, updateRecipe } from "@/lib/recipes.functions";
+import type { Ingredient, ProcessStep, RecipeLink } from "@/lib/recipes";
+import { categorySlug } from "@/lib/recipes";
+import {
+  getRecipeForAdmin,
+  listAllRecipes,
+  setRecipeHidden,
+  updateRecipe,
+} from "@/lib/recipes.functions";
 
 export const Route = createFileRoute("/_authenticated/$category/$slug/edit")({
   head: () => ({
@@ -79,6 +85,7 @@ function EditRecipePage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const fetchRecipe = useServerFn(getRecipeForAdmin);
+  const fetchAllRecipes = useServerFn(listAllRecipes);
   const save = useServerFn(updateRecipe);
   const toggleHidden = useServerFn(setRecipeHidden);
 
@@ -86,6 +93,13 @@ function EditRecipePage() {
     queryKey: ["admin-recipe", slug],
     queryFn: () => fetchRecipe({ data: { slug } }),
   });
+
+  const { data: allRecipes } = useQuery({
+    queryKey: ["admin-recipes"],
+    queryFn: () => fetchAllRecipes({}),
+  });
+
+  const linkOptions = (allRecipes ?? []).filter((item) => item.slug !== slug);
 
   const [title, setTitle] = useState("");
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
@@ -202,7 +216,7 @@ function EditRecipePage() {
           />
           <ul className="mt-4 space-y-3">
             {ingredients.map((ingredient, index) => (
-              <li key={index} className="grid grid-cols-[4rem_5rem_minmax(0,1fr)_auto_auto] gap-2">
+              <li key={index} className="grid grid-cols-[4rem_5rem_minmax(0,1fr)_9rem_auto_auto] items-center gap-2">
                 <input
                   aria-label="Amount"
                   placeholder="1"
@@ -243,6 +257,15 @@ function EditRecipePage() {
                   onClick={() =>
                     setIngredients((prev) =>
                       prev.map((item, i) => (i === index ? { ...item, secret: !item.secret } : item)),
+                    )
+                  }
+                />
+                <LinkPicker
+                  options={linkOptions}
+                  value={ingredient.link}
+                  onChange={(link) =>
+                    setIngredients((prev) =>
+                      prev.map((item, i) => (i === index ? { ...item, link } : item)),
                     )
                   }
                 />
@@ -327,6 +350,12 @@ function EditRecipePage() {
                           updateStep(setGroups, gIndex, sIndex, { branch_label: e.target.value })
                         }
                         className={`${inputClass} mt-3`}
+                      />
+                      <LinkPicker
+                        className="mt-3 w-full"
+                        options={linkOptions}
+                        value={step.link}
+                        onChange={(link) => updateStep(setGroups, gIndex, sIndex, { link })}
                       />
                     </div>
                   ))}
