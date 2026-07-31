@@ -34,18 +34,22 @@ export function SplitConnector() {
 function LaneBar() {
   return (
     <div className="grid grid-cols-2 gap-4">
-      <div className="-mr-2 ml-[50%] h-px bg-primary/40" />
-      <div className="-ml-2 mr-[50%] h-px bg-primary/40" />
+      <div className="-mr-2 ml-[50%] h-px bg-gradient-to-r from-primary/50 to-primary/20" />
+      <div className="-ml-2 mr-[50%] h-px bg-gradient-to-r from-primary/20 to-primary/50" />
     </div>
   );
 }
 
 /** Two short vertical stubs centered on each lane column. */
-function LaneStubs() {
+function LaneStubs({ towards }: { towards: "bar" | "lanes" }) {
+  const line =
+    towards === "bar"
+      ? "bg-gradient-to-b from-primary/50 to-primary/25"
+      : "bg-gradient-to-b from-primary/25 to-primary/50";
   return (
     <div className="grid grid-cols-2 gap-4">
-      <span className="mx-auto h-6 w-px bg-primary/40" />
-      <span className="mx-auto h-6 w-px bg-primary/40" />
+      <span className={`mx-auto h-6 w-px ${line}`} />
+      <span className={`mx-auto h-6 w-px ${line}`} />
     </div>
   );
 }
