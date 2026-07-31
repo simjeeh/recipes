@@ -152,9 +152,6 @@ function OptionsCard({ options }: { options: { head: ProcessStep; rest: ProcessS
         className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent"
       />
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="mr-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-          Choose one
-        </span>
         {options.map((option, index) => {
           const selected = index === (active < options.length ? active : 0);
           return (

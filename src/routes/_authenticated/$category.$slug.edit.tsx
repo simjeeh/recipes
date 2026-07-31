@@ -327,7 +327,7 @@ function EditRecipePage() {
           <p className="mt-2 text-xs text-muted-foreground">
             Steps flow top to bottom. Use the + under a step to add the next one, and add cards inside a
             row for steps that branch. A row with several cards is either "at the same time" (done
-            together) or "choose one" (options shown as a single card with buttons).
+            together) or "pick one" (options shown as a single card with buttons).
           </p>
 
           {groups.length === 0 ? (
@@ -343,7 +343,7 @@ function EditRecipePage() {
                   <div className="mb-2 inline-flex items-center gap-1 rounded-full border border-border bg-card p-1 text-[11px]">
                     {[
                       { value: false, label: "At the same time" },
-                      { value: true, label: "Choose one" },
+                      { value: true, label: "Pick one" },
                     ].map((mode) => {
                       const active = Boolean(group[0]?.alternative) === mode.value;
                       return (
