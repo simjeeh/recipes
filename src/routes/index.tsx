@@ -5,6 +5,7 @@ import { EyeOff } from "lucide-react";
 
 import { useAdminSession } from "@/hooks/useAdminSession";
 import { listAllRecipes, listVisibleRecipes } from "@/lib/recipes.functions";
+import type { RecipeSummary } from "@/lib/recipes";
 
 const TITLE = "Recipes — a personal recipe collection";
 const DESCRIPTION =
@@ -36,7 +37,7 @@ function Index() {
     enabled: isAdmin,
   });
 
-  const recipes = (isAdmin && allRecipes) || publicRecipes;
+  const recipes: RecipeSummary[] = (isAdmin && allRecipes) || publicRecipes;
 
   return (
     <div className="mx-auto max-w-5xl px-5 py-16 sm:px-8 sm:py-24">
