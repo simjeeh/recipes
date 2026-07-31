@@ -102,6 +102,7 @@ function EditRecipePage() {
   const linkOptions = (allRecipes ?? []).filter((item) => item.slug !== slug);
 
   const [title, setTitle] = useState("");
+  const [components, setComponents] = useState<Ingredient[]>([]);
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [groups, setGroups] = useState<ProcessStep[][]>([]);
   const [hidden, setHidden] = useState(false);
@@ -110,7 +111,8 @@ function EditRecipePage() {
   useEffect(() => {
     if (!recipe) return;
     setTitle(recipe.title);
-    setIngredients(recipe.ingredients);
+    setComponents(recipe.ingredients.filter((item) => item.link));
+    setIngredients(recipe.ingredients.filter((item) => !item.link));
     setGroups(toGroups(recipe.process));
     setHidden(recipe.is_hidden);
   }, [recipe]);
@@ -121,7 +123,7 @@ function EditRecipePage() {
         data: {
           id: recipe!.id,
           title,
-          ingredients,
+          ingredients: [...components.filter((item) => item.link), ...ingredients],
           process: fromGroups(groups),
         },
       }),
@@ -211,12 +213,50 @@ function EditRecipePage() {
 
         <section>
           <SectionHeading
+            title="Components"
+            onAdd={() => setComponents((prev) => [...prev, { amount: "", unit: "", name: "" }])}
+          />
+          <p className="mt-2 text-xs text-muted-foreground">
+            Other recipes needed for this one. They show above the ingredients.
+          </p>
+          <ul className="mt-4 space-y-3">
+            {components.map((component, index) => (
+              <li key={index} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+                <LinkPicker
+                  className="w-full"
+                  options={linkOptions}
+                  value={component.link}
+                  onChange={(link) => {
+                    const match = linkOptions.find((option) => option.slug === link?.slug);
+                    setComponents((prev) =>
+                      prev.map((item, i) =>
+                        i === index
+                          ? { ...item, link, name: match ? match.title : item.name }
+                          : item,
+                      ),
+                    );
+                  }}
+                />
+                <RemoveButton
+                  label="Remove component"
+                  onClick={() => setComponents((prev) => prev.filter((_, i) => i !== index))}
+                />
+              </li>
+            ))}
+            {components.length === 0 ? (
+              <li className="text-xs text-muted-foreground">No components yet.</li>
+            ) : null}
+          </ul>
+        </section>
+
+        <section>
+          <SectionHeading
             title="Ingredients"
             onAdd={() => setIngredients((prev) => [...prev, { amount: "", unit: "", name: "" }])}
           />
           <ul className="mt-4 space-y-3">
             {ingredients.map((ingredient, index) => (
-              <li key={index} className="grid grid-cols-[4rem_5rem_minmax(0,1fr)_9rem_auto_auto] items-center gap-2">
+              <li key={index} className="grid grid-cols-[4rem_5rem_minmax(0,1fr)_auto_auto] items-center gap-2">
                 <input
                   aria-label="Amount"
                   placeholder="1"
@@ -257,15 +297,6 @@ function EditRecipePage() {
                   onClick={() =>
                     setIngredients((prev) =>
                       prev.map((item, i) => (i === index ? { ...item, secret: !item.secret } : item)),
-                    )
-                  }
-                />
-                <LinkPicker
-                  options={linkOptions}
-                  value={ingredient.link}
-                  onChange={(link) =>
-                    setIngredients((prev) =>
-                      prev.map((item, i) => (i === index ? { ...item, link } : item)),
                     )
                   }
                 />
