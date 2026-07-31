@@ -13,14 +13,7 @@ export function RecipeDetail({ recipe }: { recipe: Recipe }) {
 
   return (
     <article className="mx-auto max-w-5xl px-5 py-12 sm:px-8 sm:py-16">
-      <Link
-        to="/"
-        className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-      >
-        ← All recipes
-      </Link>
-
-      <header className="mt-6 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
+      <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
         <div className="min-w-0">
           <h1 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-5xl">
             {recipe.title}

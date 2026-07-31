@@ -48,14 +48,7 @@ function NewRecipePage() {
 
   return (
     <div className="mx-auto max-w-xl px-5 py-12 sm:px-8 sm:py-16">
-      <Link
-        to="/"
-        className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-      >
-        ← All recipes
-      </Link>
-
-      <h1 className="mt-6 text-3xl font-extrabold tracking-tight text-foreground">New recipe</h1>
+      <h1 className="text-3xl font-extrabold tracking-tight text-foreground">New recipe</h1>
       <p className="mt-2 text-sm text-muted-foreground">
         It starts hidden — add ingredients and steps, then make it public when it's ready.
       </p>
