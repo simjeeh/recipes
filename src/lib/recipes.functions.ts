@@ -149,11 +149,19 @@ export const getRecipeForAdmin = createServerFn({ method: "POST" })
     return row ? toRecipe(row as Row) : null;
   });
 
+const linkSchema = z
+  .object({
+    slug: z.string().min(1).max(80),
+    category: z.string().min(1).max(40),
+  })
+  .optional();
+
 const ingredientSchema = z.object({
   amount: z.string().max(40).default(""),
   unit: z.string().max(40).default(""),
   name: z.string().min(1).max(160),
   secret: z.boolean().optional(),
+  link: linkSchema,
 });
 
 const stepSchema = z.object({
@@ -163,6 +171,7 @@ const stepSchema = z.object({
   parents: z.array(z.string().min(1).max(60)).default([]),
   branch_label: z.string().max(80).optional(),
   secret: z.boolean().optional(),
+  link: linkSchema,
 });
 
 const updateSchema = z.object({
