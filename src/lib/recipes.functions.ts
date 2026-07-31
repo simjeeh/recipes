@@ -172,6 +172,53 @@ const updateSchema = z.object({
   process: z.array(stepSchema).max(100),
 });
 
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+}
+
+export const createRecipe = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        title: z.string().trim().min(1).max(160),
+        category: z.enum(["Main", "Breakfast", "Sides", "Snacks", "Desserts", "Drinks", "Sauces"]),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context as never);
+    const base = slugify(data.title) || "recipe";
+
+    const { data: existing, error: listError } = await context.supabase
+      .from("recipes")
+      .select("slug")
+      .like("slug", `${base}%`);
+    if (listError) throw new Error(listError.message);
+
+    const taken = new Set((existing ?? []).map((r) => r.slug));
+    let slug = base;
+    let n = 2;
+    while (taken.has(slug)) slug = `${base}-${n++}`;
+
+    const { error } = await context.supabase.from("recipes").insert({
+      title: data.title,
+      slug,
+      category: data.category,
+      ingredients: [],
+      process: [],
+      is_hidden: true,
+    });
+    if (error) throw new Error(error.message);
+    return { slug };
+  });
+
 export const updateRecipe = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => updateSchema.parse(input))
