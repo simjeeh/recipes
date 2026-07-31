@@ -22,6 +22,7 @@ export type Database = {
           ingredients: Json
           is_hidden: boolean
           process: Json
+          scale: Json | null
           slug: string
           title: string
           updated_at: string
@@ -33,6 +34,7 @@ export type Database = {
           ingredients?: Json
           is_hidden?: boolean
           process?: Json
+          scale?: Json | null
           slug: string
           title: string
           updated_at?: string
@@ -44,6 +46,7 @@ export type Database = {
           ingredients?: Json
           is_hidden?: boolean
           process?: Json
+          scale?: Json | null
           slug?: string
           title?: string
           updated_at?: string

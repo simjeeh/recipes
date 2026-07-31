@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { CircleDashed, Eye, EyeOff, Loader2, Lock, Plus, Trash2 } from "lucide-react";
+import { CircleDashed, Eye, EyeOff, Loader2, Lock, Plus, Sigma, Trash2 } from "lucide-react";
 
-import type { Ingredient, ProcessStep, RecipeLink } from "@/lib/recipes";
+import { FormulaModal } from "@/components/FormulaModal";
+
+import type { Ingredient, ProcessStep, RecipeLink, RecipeScale } from "@/lib/recipes";
 import type { ProcessBranch, ProcessRow } from "@/lib/recipes";
 import { categorySlug, collectRowSteps, rowsToSteps, toProcessRows } from "@/lib/recipes";
 import {
@@ -123,6 +125,8 @@ function EditRecipePage() {
   const [components, setComponents] = useState<Ingredient[]>([]);
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [rows, setRows] = useState<ProcessRow[]>([]);
+  const [scale, setScale] = useState<RecipeScale | null>(null);
+  const [formulaIndex, setFormulaIndex] = useState<number | null>(null);
   const [hidden, setHidden] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -132,6 +136,7 @@ function EditRecipePage() {
     setComponents(recipe.ingredients.filter((item) => item.link));
     setIngredients(recipe.ingredients.filter((item) => !item.link));
     setRows(toProcessRows(recipe.process));
+    setScale(recipe.scale ?? null);
     setHidden(recipe.is_hidden);
   }, [recipe]);
 
@@ -143,6 +148,7 @@ function EditRecipePage() {
           title,
           ingredients: [...components.filter((item) => item.link), ...ingredients],
           process: rowsToSteps(rows),
+          scale: scale && scale.label.trim() ? { ...scale, label: scale.label.trim() } : null,
         },
       }),
     onSuccess: async () => {
@@ -268,13 +274,64 @@ function EditRecipePage() {
         </section>
 
         <section>
+          <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-primary">Scaling</h2>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Give the recipe a variable (used as <code className="text-primary">n</code>) so
+            ingredient amounts can be formulas that update with the reader's input.
+          </p>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              aria-pressed={Boolean(scale)}
+              onClick={() => setScale(scale ? null : { label: "Servings", default: 2 })}
+              className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                scale
+                  ? "border-primary bg-primary/15 text-primary"
+                  : "border-border text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {scale ? "Scaling on" : "Scaling off"}
+            </button>
+            {scale ? (
+              <>
+                <input
+                  aria-label="Variable name"
+                  placeholder="Cups"
+                  value={scale.label}
+                  onChange={(e) => setScale({ ...scale, label: e.target.value })}
+                  className={`${inputClass} w-40`}
+                />
+                <input
+                  aria-label="Default value"
+                  type="number"
+                  min={0.5}
+                  step={0.5}
+                  value={scale.default}
+                  onChange={(e) =>
+                    setScale({ ...scale, default: Number(e.target.value) || 1 })
+                  }
+                  className={`${inputClass} w-24`}
+                />
+              </>
+            ) : null}
+          </div>
+        </section>
+
+        <section>
           <SectionHeading
             title="Ingredients"
             onAdd={() => setIngredients((prev) => [...prev, { amount: "", unit: "", name: "" }])}
           />
           <ul className="mt-4 space-y-3">
             {ingredients.map((ingredient, index) => (
-              <li key={index} className="grid grid-cols-[4rem_5rem_minmax(0,1fr)_auto_auto_auto] items-center gap-2">
+              <li
+                key={index}
+                className={`grid items-center gap-2 ${
+                  scale
+                    ? "grid-cols-[4rem_5rem_minmax(0,1fr)_auto_auto_auto_auto]"
+                    : "grid-cols-[4rem_5rem_minmax(0,1fr)_auto_auto_auto]"
+                }`}
+              >
                 <input
                   aria-label="Amount"
                   placeholder="1"
@@ -284,7 +341,7 @@ function EditRecipePage() {
                       prev.map((item, i) => (i === index ? { ...item, amount: e.target.value } : item)),
                     )
                   }
-                  className={inputClass}
+                  className={`${inputClass} ${ingredient.amount.includes("{") ? "font-mono text-primary" : ""}`}
                 />
                 <input
                   aria-label="Unit"
@@ -309,6 +366,15 @@ function EditRecipePage() {
                   }
                   className={inputClass}
                 />
+                {scale ? (
+                  <ToggleButton
+                    label="Edit amount formula"
+                    title="Edit amount formula"
+                    active={ingredient.amount.includes("{")}
+                    icon={<Sigma className="h-4 w-4" aria-hidden="true" />}
+                    onClick={() => setFormulaIndex(index)}
+                  />
+                ) : null}
                 <SecretToggle
                   label="Mark ingredient secret"
                   active={Boolean(ingredient.secret)}
@@ -345,7 +411,8 @@ function EditRecipePage() {
           <p className="mt-2 text-xs text-muted-foreground">
             Steps flow top to bottom. A row can hold several steps done at the same time, or be
             switched to "Pick one" — then each option stacks in its own block and can hold as many
-            steps as it needs, including further "Pick one" rows nested inside.
+            steps as it needs, including further "Pick one" rows nested inside. Steps never hold
+            amounts — write "add half the water" and keep the totals in the ingredients.
           </p>
 
           <div className="mt-4">
@@ -374,6 +441,20 @@ function EditRecipePage() {
           {message ? <span className="text-sm text-muted-foreground">{message}</span> : null}
         </div>
       </form>
+
+      <FormulaModal
+        open={formulaIndex !== null}
+        variable={scale?.label ?? "n"}
+        value={formulaIndex !== null ? (ingredients[formulaIndex]?.amount ?? "") : ""}
+        unit={formulaIndex !== null ? ingredients[formulaIndex]?.unit : undefined}
+        name={formulaIndex !== null ? ingredients[formulaIndex]?.name : undefined}
+        onClose={() => setFormulaIndex(null)}
+        onSave={(next) =>
+          setIngredients((prev) =>
+            prev.map((item, i) => (i === formulaIndex ? { ...item, amount: next } : item)),
+          )
+        }
+      />
     </div>
   );
 }
