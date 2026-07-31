@@ -8,6 +8,7 @@ import {
 } from "@/lib/recipes";
 import {
   LaneLabel,
+  LaneScroll,
   LineConnector,
   MergeConnector,
   PillLane,
@@ -74,18 +75,31 @@ function Row({ row, nested = false }: { row: ProcessRow; nested?: boolean }) {
   }
 
   if (row.kind === "parallel") {
+    const Lane = ({ lane }: { lane: ProcessBranch }) => (
+      <div className="flex h-full flex-col">
+        {lane.label ? <LaneLabel>{lane.label}</LaneLabel> : null}
+        <RowList rows={lane.rows} nested />
+        <span
+          aria-hidden="true"
+          className="mx-auto mt-1 hidden w-px flex-1 bg-gradient-to-b from-primary/10 via-primary/40 to-primary/50 md:block"
+        />
+      </div>
+    );
+
     return (
-      <div className="grid items-stretch gap-4 md:grid-cols-2">
-        {row.lanes.map((lane, index) => (
-          <div key={index} className="flex h-full flex-col">
-            {lane.label ? <LaneLabel>{lane.label}</LaneLabel> : null}
-            <RowList rows={lane.rows} nested />
-            <span
-              aria-hidden="true"
-              className="mx-auto mt-1 hidden w-px flex-1 bg-gradient-to-b from-primary/10 via-primary/40 to-primary/50 md:block"
-            />
-          </div>
-        ))}
+      <div className="relative">
+        <LaneScroll>
+          {row.lanes.map((lane, index) => (
+            <div key={index} className="w-[82vw] shrink-0 snap-center">
+              <Lane lane={lane} />
+            </div>
+          ))}
+        </LaneScroll>
+        <div className="hidden grid-cols-2 items-stretch gap-4 md:grid">
+          {row.lanes.map((lane, index) => (
+            <Lane key={index} lane={lane} />
+          ))}
+        </div>
       </div>
     );
   }
