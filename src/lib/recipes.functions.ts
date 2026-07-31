@@ -170,6 +170,7 @@ const stepSchema = z.object({
   detail: z.string().max(1000).optional(),
   parents: z.array(z.string().min(1).max(60)).default([]),
   branch_label: z.string().max(80).optional(),
+  alternative: z.boolean().optional(),
   secret: z.boolean().optional(),
   link: linkSchema,
 });
