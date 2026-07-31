@@ -234,7 +234,15 @@ function emitRows(
       const steps = row.steps.filter((step) => step.label.trim() || step.detail?.trim());
       if (!steps.length) continue;
       for (const step of steps) {
-        out.push({ ...step, parents: current, alternative: false, branch_label: undefined });
+        out.push({
+          ...step,
+          // Amounts live in the ingredients list, never in a step.
+          label: stripFormulas(step.label),
+          detail: step.detail ? stripFormulas(step.detail) : step.detail,
+          parents: current,
+          alternative: false,
+          branch_label: undefined,
+        });
       }
       if (heads === null) heads = steps.map((step) => step.id);
       current = steps.map((step) => step.id);
